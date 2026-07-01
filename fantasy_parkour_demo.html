@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>VendiMap CGI - 3D Tokyo Neon Parkour Premium</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #030307;
+            font-family: 'Inter', sans-serif;
+        }
+        #canvas-container {
+            width: 1080px;
+            height: 1920px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5); /* Desktop preview scaling */
+            transform-origin: center center;
+            box-shadow: 0 10px 45px rgba(0,0,0,0.9);
+            border: 2px solid #141426;
+            overflow: hidden;
+        }
+        @media (max-width: 1080px) {
+            #canvas-container {
+                width: 100%;
+                height: 100%;
+                transform: none;
+                top: 0;
+                left: 0;
+                border: none;
+            }
+        }
+        #hud {
+            position: absolute;
+            top: 60px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #fff;
+            z-index: 100;
+            pointer-events: none;
+        }
+        .hud-title {
+            font-size: 1.8rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.9), 0 0 30px rgba(255, 0, 122, 0.7);
+            margin-bottom: 5px;
+        }
+        .hud-subtitle {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.75);
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+    </style>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div id="canvas-container">
+        <div id="hud">
+            <div class="hud-title">TOKYO NEON RUN</div>
+            <div class="hud-subtitle">Premium 3D CGI // 60 FPS Render</div>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('canvas-container');
+        const width = 1080;
+        const height = 1920;
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x040409, 0.018);
+
+        // Vertical aspect camera (9:16)
+        const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(1); // Standard pixel ratio for playwright capture
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setClearColor(0x040409, 1);
+        container.appendChild(renderer.domElement);
+
+        // Lighting System
+        const ambientLight = new THREE.AmbientLight(0x080816);
+        scene.add(ambientLight);
+
+        // Moonlight (Casting shadows)
+        const moonLight = new THREE.DirectionalLight(0x00d4ff, 1.4);
+        moonLight.position.set(12, 35, 8);
+        moonLight.castShadow = true;
+        moonLight.shadow.mapSize.width = 1024;
+        moonLight.shadow.mapSize.height = 1024;
+        moonLight.shadow.camera.near = 0.5;
+        moonLight.shadow.camera.far = 150;
+        const d = 35;
+        moonLight.shadow.camera.left = -d;
+        moonLight.shadow.camera.right = d;
+        moonLight.shadow.camera.top = d;
+        moonLight.shadow.camera.bottom = -d;
+        scene.add(moonLight);
+
+        // Background magenta point glow
+        const glowLight = new THREE.PointLight(0xff00aa, 2.5, 50);
+        glowLight.position.set(0, 12, 32);
+        scene.add(glowLight);
+
+        // --- Procedural Textures ---
+        // Building facade windows grid
+        function createFacadeTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fillRect(0, 0, 256, 512);
+            
+            const rows = 12;
+            const cols = 5;
+            const winW = 24;
+            const winH = 22;
+            const gapX = 22;
+            const gapY = 16;
+            const startX = 20;
+            const startY = 30;
+            
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const x = startX + c * (winW + gapX);
+                    const y = startY + r * (winH + gapY);
+                    
+                    const rand = Math.random();
+                    if (rand < 0.25) {
+                        ctx.shadowColor = 'rgba(255, 175, 45, 0.95)';
+                        ctx.shadowBlur = 14;
+                        ctx.fillStyle = 'rgba(255, 210, 110, 0.95)';
+                    } else if (rand < 0.35) {
+                        ctx.shadowColor = 'rgba(0, 215, 255, 0.95)';
+                        ctx.shadowBlur = 14;
+                        ctx.fillStyle = 'rgba(110, 235, 255, 0.95)';
+                    } else {
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = '#141724';
+                    }
+                    ctx.fillRect(x, y, winW, winH);
+                }
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            return texture;
+        }
+
+        // Tokyo Cyberpunk billboard textures
+        function createBillboardTexture(text, type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            let bg = '#010103';
+            let border = '#00ffff';
+            let textGlow = '#ff00ff';
+            let textColor = '#ffffff';
+            
+            if (type === 0) { // Cyan theme
+                bg = 'rgba(4, 5, 8, 0.95)';
+                border = '#00ffff';
+                textGlow = '#00ffff';
+            } else if (type === 1) { // Red Japanese street sign
+                bg = '#8f0c10';
+                border = '#ffdd00';
+                textGlow = '#ff0022';
+                textColor = '#ffdd00';
+            } else if (type === 2) { // Emissive pink theme
+                bg = '#10021a';
+                border = '#ff00aa';
+                textGlow = '#ff00aa';
+            }
+            
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, 512, 256);
+            
+            ctx.strokeStyle = border;
+            ctx.lineWidth = 6;
+            ctx.strokeRect(10, 10, 492, 236);
+            ctx.lineWidth = 2;
+            ctx.strokeRect(18, 18, 476, 220);
+            
+            ctx.shadowColor = textGlow;
+            ctx.shadowBlur = 20;
+            ctx.fillStyle = textColor;
+            
+            if (type === 1) {
+                ctx.font = '900 68px "Noto Sans JP", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(text, 256, 145);
+            } else {
+                ctx.font = '900 52px "Inter", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(text, 256, 125);
+                
+                ctx.shadowBlur = 4;
+                ctx.font = 'bold 20px monospace';
+                ctx.fillStyle = border;
+                ctx.fillText("RUNNER SECURED // PORTAL: ACTIVE", 256, 185);
+            }
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // Vending machine panel texture
+        function createVendingMachineTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#aa0f15'; // Red frame
+            ctx.fillRect(0, 0, 128, 256);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(8, 8, 112, 30);
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("VendiMap", 64, 28);
+            
+            ctx.fillStyle = '#14151b';
+            ctx.fillRect(8, 44, 112, 105);
+            
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const x = 15 + col * 26;
+                    const y = 52 + row * 32;
+                    ctx.fillStyle = (col + row) % 2 === 0 ? '#ff0055' : '#00ffff';
+                    ctx.fillRect(x, y, 12, 18);
+                    ctx.fillStyle = '#00ff66';
+                    ctx.fillRect(x, y + 20, 12, 4); // Price tags
+                }
+            }
+            
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(16, 195, 96, 45);
+            
+            ctx.fillStyle = '#444';
+            ctx.fillRect(92, 155, 20, 25);
+            
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // --- Build Environment (Tokyo Neon Street) ---
+        // 1. Shiny Wet Asphalt Road
+        const roadW = 10;
+        const roadH = 1;
+        const roadD = 120;
+        const roadGeom = new THREE.BoxGeometry(roadW, roadH, roadD);
+        const roadMat = new THREE.MeshStandardMaterial({
+            color: 0x040406,
+            roughness: 0.15,
+            metalness: 0.82
+        });
+        const road = new THREE.Mesh(roadGeom, roadMat);
+        road.position.set(0, -0.5, 40);
+        road.receiveShadow = true;
+        scene.add(road);
+
+        // White road center stripes
+        for (let i = -10; i < roadD; i += 8) {
+            const stripeGeo = new THREE.BoxGeometry(0.12, 0.02, 2.5);
+            const stripeMat = new THREE.MeshBasicMaterial({ color: 0x666677 });
+            const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+            stripe.position.set(0, 0.01, i);
+            scene.add(stripe);
+        }
+
+        // Concrete Curbs on left and right sides
+        const curbMat = new THREE.MeshStandardMaterial({ color: 0x1a1a20, roughness: 0.7 });
+        const leftCurb = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.2, roadD), curbMat);
+        leftCurb.position.set(-5.6, 0.1, 40);
+        leftCurb.receiveShadow = true;
+        scene.add(leftCurb);
+
+        const rightCurb = leftCurb.clone();
+        rightCurb.position.set(5.6, 0.1, 40);
+        scene.add(rightCurb);
+
+        // Procedural Wet Puddle Meshes on the Road
+        const puddleCount = 6;
+        const puddleMat = new THREE.MeshStandardMaterial({
+            color: 0x020204,
+            roughness: 0.04,
+            metalness: 0.95
+        });
+        const puddles = [];
+        const puddleZPositions = [8, 22, 38, 48, 56, 68];
+        const puddleXPositions = [-1.5, 2.0, -2.5, 1.2, -0.5, 2.2];
+        const puddleWidths = [1.8, 2.2, 1.5, 2.5, 2.0, 1.6];
+        
+        for (let i = 0; i < puddleCount; i++) {
+            const pud = new THREE.Mesh(new THREE.BoxGeometry(puddleWidths[i], 0.005, 3.5), puddleMat);
+            pud.position.set(puddleXPositions[i], 0.01, puddleZPositions[i]);
+            pud.receiveShadow = true;
+            scene.add(pud);
+            puddles.push(pud);
+        }
+
+        // 2. Sidewalk Rails/Barriers (For Vault Action)
+        const barrierZ = 12.0;
+        const postL = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.8), new THREE.MeshStandardMaterial({ color: 0x888899, metalness: 0.9, roughness: 0.15 }));
+        postL.position.set(-2.5, 0.4, barrierZ);
+        postL.castShadow = true;
+        scene.add(postL);
+
+        const postR = postL.clone();
+        postR.position.set(2.5, 0.4, barrierZ);
+        scene.add(postR);
+
+        const mainBar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 5.0), new THREE.MeshStandardMaterial({ color: 0x888899, metalness: 0.9, roughness: 0.15 }));
+        mainBar.rotation.z = Math.PI / 2;
+        mainBar.position.set(0, 0.75, barrierZ);
+        mainBar.castShadow = true;
+        scene.add(mainBar);
+
+        // 3. Buildings Procedural Creation
+        const concreteMat = new THREE.MeshStandardMaterial({ color: 0x0f0f12, roughness: 0.82 });
+        const facadeTex = createFacadeTexture();
+        const facadeMat = new THREE.MeshStandardMaterial({ map: facadeTex, roughness: 0.35 });
+
+        const ads = [
+            { text: "VendiMap", type: 0 },
+            { text: "自動販売機", type: 1 },
+            { text: "AETHER SPRINT", type: 2 },
+            { text: "渋谷駅前", type: 1 },
+            { text: "CYBER 2026", type: 0 },
+            { text: "24h OPEN", type: 2 }
+        ];
+
+        function createBuilding(x, y, z, w, h, d, isLeft, index) {
+            const group = new THREE.Group();
+            const geom = new THREE.BoxGeometry(w, h, d);
+            const materials = [concreteMat, concreteMat, concreteMat, concreteMat, concreteMat, concreteMat];
+            
+            if (isLeft) {
+                materials[0] = facadeMat; // Right face
+            } else {
+                materials[1] = facadeMat; // Left face
+            }
+            
+            const mesh = new THREE.Mesh(geom, materials);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            group.add(mesh);
+            
+            // Hanging Neon sign
+            const ad = ads[index % ads.length];
+            const adGeo = new THREE.BoxGeometry(3.5, 1.8, 0.15);
+            const adTex = createBillboardTexture(ad.text, ad.type);
+            const adMat = new THREE.MeshBasicMaterial({ map: adTex });
+            const adMesh = new THREE.Mesh(adGeo, adMat);
+            
+            adMesh.position.set(isLeft ? w/2 + 0.12 : -w/2 - 0.12, h * 0.25, 0);
+            adMesh.rotation.y = isLeft ? -Math.PI/2 : Math.PI/2;
+            group.add(adMesh);
+            
+            // Sign Glow Light
+            const color = ad.type === 0 ? 0x00ffff : (ad.type === 1 ? 0xff0033 : 0xff00ff);
+            const pLight = new THREE.PointLight(color, 2.2, 12);
+            pLight.position.set(isLeft ? w/2 + 1.0 : -w/2 - 1.0, h * 0.20, 0);
+            group.add(pLight);
+            
+            group.position.set(x, y, z);
+            scene.add(group);
+        }
+
+        // Layout Buildings along sidewalks
+        for (let i = 0; i < 6; i++) {
+            const z = i * 20;
+            createBuilding(-10.5, 15, z, 9, 30, 16, true, i);
+            createBuilding(10.5, 15, z + 8, 9, 30, 16, false, i + 1);
+        }
+
+        // 4. Vending Machines
+        function createVendingMachine(x, y, z, rotY, isLeft) {
+            const group = new THREE.Group();
+            const vmGeom = new THREE.BoxGeometry(0.9, 1.8, 0.7);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1d1e26, roughness: 0.5 });
+            const vmTex = createVendingMachineTexture();
+            const vmFrontMat = new THREE.MeshStandardMaterial({ map: vmTex, roughness: 0.2 });
+            
+            const materials = [bodyMat, bodyMat, bodyMat, bodyMat, vmFrontMat, bodyMat];
+            const mesh = new THREE.Mesh(vmGeom, materials);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            group.add(mesh);
+            
+            // Light
+            const lightColor = isLeft ? 0xff0055 : 0x00d4ff;
+            const vmLight = new THREE.PointLight(lightColor, 2.5, 6);
+            vmLight.position.set(0, 0.1, 0.65);
+            group.add(vmLight);
+            
+            group.position.set(x, y, z);
+            group.rotation.y = rotY;
+            scene.add(group);
+        }
+
+        createVendingMachine(-4.9, 0.9, 6, Math.PI / 2, true);
+        createVendingMachine(4.9, 0.9, 25, -Math.PI / 2, false);
+        createVendingMachine(-4.9, 0.9, 44, Math.PI / 2, true);
+        createVendingMachine(4.9, 0.9, 58, -Math.PI / 2, false);
+
+        // 5. Utility Poles & Cables
+        const poles = [];
+        for (let z = 2; z < 90; z += 24) {
+            const poleGeo = new THREE.CylinderGeometry(0.12, 0.15, 8.5, 8);
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0x24242e, roughness: 0.8 });
+            const pole = new THREE.Mesh(poleGeo, poleMat);
+            pole.position.set(-5.4, 4.25, z);
+            pole.castShadow = true;
+            scene.add(pole);
+            poles.push(new THREE.Vector3(-5.4, 8.2, z));
+            
+            // Cross bar
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 0.12), new THREE.MeshStandardMaterial({ color: 0x111 }));
+            bar.position.set(-5.4, 8.0, z);
+            scene.add(bar);
+        }
+
+        // Connect poles with saggy power lines
+        for (let i = 0; i < poles.length - 1; i++) {
+            const pStart = poles[i];
+            const pEnd = poles[i+1];
+            const linePoints = [];
+            const steps = 15;
+            for (let s = 0; s <= steps; s++) {
+                const t = s / steps;
+                const x = pStart.x;
+                const z = THREE.MathUtils.lerp(pStart.z, pStart.z + 24, t);
+                const y = THREE.MathUtils.lerp(pStart.y, pEnd.y, t) - 0.7 * Math.sin(t * Math.PI);
+                linePoints.push(new THREE.Vector3(x, y, z));
+            }
+            const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(linePoints), new THREE.LineBasicMaterial({ color: 0x050508 }));
+            scene.add(line);
+        }
+
+        // --- Build Detailed Anime Character (Segmented Joints) ---
+        const charGroup = new THREE.Group();
+        scene.add(charGroup);
+
+        const skinMat = new THREE.MeshPhongMaterial({ color: 0xffd3b4, roughness: 0.45 });
+        const jacketMat = new THREE.MeshStandardMaterial({ color: 0x121320, roughness: 0.7 });
+        const glowingBlue = new THREE.MeshBasicMaterial({ color: 0x00d4ff });
+        const glowingPink = new THREE.MeshBasicMaterial({ color: 0xff00aa });
+
+        // Head Group
+        const headGroup = new THREE.Group();
+        headGroup.position.y = 1.95;
+        charGroup.add(headGroup);
+
+        const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 16), skinMat);
+        headMesh.castShadow = true;
+        headGroup.add(headMesh);
+
+        // Cyber Cat-Ear Headphones (Dual-tone)
+        const earOuterL = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.18, 4), jacketMat);
+        earOuterL.position.set(-0.17, 0.26, 0.02);
+        earOuterL.rotation.z = 0.3;
+        headGroup.add(earOuterL);
+        const earInnerL = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 4), glowingPink);
+        earInnerL.position.set(-0.16, 0.27, 0.04);
+        earInnerL.rotation.z = 0.3;
+        headGroup.add(earInnerL);
+
+        const earOuterR = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.18, 4), jacketMat);
+        earOuterR.position.set(0.17, 0.26, 0.02);
+        earOuterR.rotation.z = -0.3;
+        headGroup.add(earOuterR);
+        const earInnerR = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 4), glowingPink);
+        earInnerR.position.set(0.16, 0.27, 0.04);
+        earInnerR.rotation.z = -0.3;
+        headGroup.add(earInnerR);
+
+        // Dynamic Visor with Animated Eyes (Canvas Texture)
+        const visorCanvas = document.createElement('canvas');
+        visorCanvas.width = 128;
+        visorCanvas.height = 64;
+        const visorCtx = visorCanvas.getContext('2d');
+        const visorTexture = new THREE.CanvasTexture(visorCanvas);
+        
+        const visorMat = new THREE.MeshPhysicalMaterial({
+            map: visorTexture,
+            roughness: 0.1,
+            metalness: 0.1,
+            transmission: 0.8,
+            thickness: 0.3
+        });
+        
+        // Sleek cyber-goggles (glowing frame + glass lens)
+        const gFrameGeo = new THREE.BoxGeometry(0.34, 0.11, 0.06);
+        const gFrameMesh = new THREE.Mesh(gFrameGeo, glowingPink);
+        gFrameMesh.position.set(0, 0.03, 0.14);
+        headGroup.add(gFrameMesh);
+        
+        const visorMesh = new THREE.Mesh(new THREE.BoxGeometry(0.31, 0.08, 0.11), visorMat);
+        visorMesh.position.set(0, 0.03, 0.16);
+        headGroup.add(visorMesh);
+
+        // Cute glowing blush cheek bars
+        const blushL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.018, 0.02), glowingPink);
+        blushL.position.set(-0.12, -0.09, 0.18);
+        blushL.rotation.z = 0.12;
+        headGroup.add(blushL);
+        
+        const blushR = blushL.clone();
+        blushR.position.x = 0.12;
+        blushR.rotation.z = -0.12;
+        headGroup.add(blushR);
+
+        // Floating Cyber Halo
+        const haloGeo = new THREE.TorusGeometry(0.20, 0.014, 8, 24);
+        const haloMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff });
+        const halo = new THREE.Mesh(haloGeo, haloMat);
+        halo.position.set(0, 0.40, -0.06);
+        halo.rotation.x = Math.PI / 2.3;
+        headGroup.add(halo);
+
+        // Structured Anime Bob Hairstyle
+        const hairMat = new THREE.MeshStandardMaterial({ color: 0xff00aa, roughness: 0.6, emissive: 0x3d0026 });
+        
+        // 1. Hair Cap (Back/Side Bulk)
+        const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), hairMat);
+        hairCap.rotation.x = -Math.PI / 2.3; // tilt backwards
+        hairCap.position.set(0, 0.04, -0.04);
+        headGroup.add(hairCap);
+
+        // 2. Front Fringe (Stylized bangs)
+        const bangsPositions = [
+            { x: -0.14, y: 0.06, z: 0.19, rotX: 0.18, rotZ: 0.08 },
+            { x: -0.07, y: 0.05, z: 0.22, rotX: 0.18, rotZ: 0.04 },
+            { x: 0.0, y: 0.04, z: 0.24, rotX: 0.18, rotZ: 0 },
+            { x: 0.07, y: 0.05, z: 0.22, rotX: 0.18, rotZ: -0.04 },
+            { x: 0.14, y: 0.06, z: 0.19, rotX: 0.18, rotZ: -0.08 }
+        ];
+        bangsPositions.forEach(pos => {
+            const strand = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.20, 4), hairMat);
+            strand.position.set(pos.x, pos.y, pos.z);
+            strand.rotation.set(pos.rotX, 0, pos.rotZ);
+            headGroup.add(strand);
+        });
+
+        // 3. Side Framing Locks
+        const lockL = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.012, 0.34, 6), hairMat);
+        lockL.position.set(-0.21, -0.06, 0.16);
+        lockL.rotation.z = -0.12;
+        headGroup.add(lockL);
+
+        const lockR = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.012, 0.34, 6), hairMat);
+        lockR.position.set(0.21, -0.06, 0.16);
+        lockR.rotation.z = 0.12;
+        headGroup.add(lockR);
+
+        // Wind-Swaying Twin-Tails (Jointed Chains)
+        const tailJointsL = [];
+        const tailJointsR = [];
+
+        function buildTwinTail(isLeft) {
+            const list = [];
+            let parent = headGroup;
+            const xPos = isLeft ? -0.22 : 0.22;
+            
+            // Segment 1
+            const j1 = new THREE.Group();
+            j1.position.set(xPos, 0.05, -0.15);
+            parent.add(j1);
+            const m1 = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.035, 0.42, 6), hairMat);
+            m1.position.y = -0.21;
+            j1.add(m1);
+            list.push(j1);
+            
+            // Segment 2
+            const j2 = new THREE.Group();
+            j2.position.set(0, -0.42, 0);
+            j1.add(j2);
+            const m2 = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.025, 0.42, 6), hairMat);
+            m2.position.y = -0.21;
+            j2.add(m2);
+            list.push(j2);
+            
+            // Segment 3
+            const j3 = new THREE.Group();
+            j3.position.set(0, -0.42, 0);
+            j2.add(j3);
+            const m3 = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.015, 0.42, 6), glowingPink); // glowing tips!
+            m3.position.y = -0.21;
+            j3.add(m3);
+            list.push(j3);
+            
+            return list;
+        }
+        tailJointsL.push(...buildTwinTail(true));
+        tailJointsR.push(...buildTwinTail(false));
+
+        // Torso / Slender Cyber Hoodie
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.75, 0.22), jacketMat);
+        torso.position.y = 1.35;
+        torso.castShadow = true;
+        charGroup.add(torso);
+
+        // Cyber Shoulder Armor Pads
+        const padL = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.13, 0.18), glowingBlue);
+        padL.position.set(-0.21, 1.65, 0);
+        charGroup.add(padL);
+        const padR = padL.clone();
+        padR.position.x = 0.21;
+        charGroup.add(padR);
+
+        // Hoodie pointed hood
+        const hood = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.42, 4), jacketMat);
+        hood.rotation.x = -Math.PI / 3;
+        hood.position.set(0, 1.48, -0.18);
+        charGroup.add(hood);
+
+        // Hoodie drawstring cords
+        const cordL = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.32, 4), glowingPink);
+        cordL.position.set(-0.06, 1.25, 0.14);
+        charGroup.add(cordL);
+        const cordR = cordL.clone();
+        cordR.position.x = 0.06;
+        charGroup.add(cordR);
+
+        // Glowing trim lines on chest (Zipper style)
+        const chestTrim = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.68, 0.24), glowingBlue);
+        chestTrim.position.set(0, 1.35, 0.01);
+        charGroup.add(chestTrim);
+
+        // Neck Scarf wrapping
+        const scarfCollar = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.04, 8, 16), glowingPink);
+        scarfCollar.rotation.x = Math.PI / 2;
+        scarfCollar.position.set(0, 1.68, -0.02);
+        charGroup.add(scarfCollar);
+
+        // Cyberpunk waist utility belt
+        const waistBelt = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.06, 0.24), glowingPink);
+        waistBelt.position.set(0, 1.02, 0);
+        charGroup.add(waistBelt);
+
+        // Jointed Trailing Scarf Ribbon
+        const scarfJoints = [];
+        let sParent = charGroup;
+        
+        // Scarf Segment 1
+        const sj1 = new THREE.Group();
+        sj1.position.set(0, 1.62, -0.12);
+        sParent.add(sj1);
+        const sm1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.32, 0.03), glowingPink);
+        sm1.position.y = -0.16;
+        sj1.add(sm1);
+        scarfJoints.push(sj1);
+
+        // Scarf Segment 2
+        const sj2 = new THREE.Group();
+        sj2.position.set(0, -0.32, 0);
+        sj1.add(sj2);
+        const sm2 = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.32, 0.02), glowingPink);
+        sm2.position.y = -0.16;
+        sj2.add(sm2);
+        scarfJoints.push(sj2);
+
+        // Wind-Swaying Dual Coattails (Jointed Chains)
+        const coatJointsL = [];
+        const coatJointsR = [];
+        function buildCoatTail(isLeft) {
+            const list = [];
+            const xPos = isLeft ? -0.13 : 0.13;
+            
+            // Segment 1
+            const j1 = new THREE.Group();
+            j1.position.set(xPos, 1.0, -0.11);
+            charGroup.add(j1);
+            const m1 = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.38, 0.02), jacketMat);
+            m1.position.y = -0.19;
+            j1.add(m1);
+            list.push(j1);
+            
+            // Segment 2
+            const j2 = new THREE.Group();
+            j2.position.set(0, -0.38, 0);
+            j1.add(j2);
+            const m2 = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.38, 0.015), jacketMat);
+            m2.position.y = -0.19;
+            j2.add(m2);
+            list.push(j2);
+            
+            // Segment 3
+            const j3 = new THREE.Group();
+            j3.position.set(0, -0.38, 0);
+            j2.add(j3);
+            const m3 = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.38, 0.01), glowingPink); // glowing tip
+            m3.position.y = -0.19;
+            j3.add(m3);
+            list.push(j3);
+            
+            return list;
+        }
+        coatJointsL.push(...buildCoatTail(true));
+        coatJointsR.push(...buildCoatTail(false));
+
+        // Backpack Booster Jet Mount
+        const boosterPack = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.28, 0.10), jacketMat);
+        boosterPack.position.set(0, 1.4, -0.16);
+        charGroup.add(boosterPack);
+        
+        const boosterL = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.04, 0.10, 6), glowingBlue);
+        boosterL.position.set(-0.06, 1.32, -0.22);
+        boosterL.rotation.x = Math.PI / 3; // pointing back-down
+        charGroup.add(boosterL);
+        const boosterR = boosterL.clone();
+        boosterR.position.x = 0.06;
+        charGroup.add(boosterR);
+
+        // Left Leg Hierarchical Joints
+        const leftThigh = new THREE.Group();
+        leftThigh.position.set(-0.15, 0.95, 0);
+        charGroup.add(leftThigh);
+        const leftThighMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.05, 0.5, 8), jacketMat);
+        leftThighMesh.position.y = -0.25;
+        leftThighMesh.castShadow = true;
+        leftThigh.add(leftThighMesh);
+        
+        // Knee Armor Pad
+        const kneeL = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.075, 0.075), glowingPink);
+        kneeL.position.set(0, -0.5, 0.04);
+        leftThigh.add(kneeL);
+
+        const leftShin = new THREE.Group();
+        leftShin.position.set(0, -0.5, 0);
+        leftThigh.add(leftShin);
+        const leftShinMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 0.5, 8), jacketMat);
+        leftShinMesh.position.y = -0.25;
+        leftShinMesh.castShadow = true;
+        leftShin.add(leftShinMesh);
+
+        // Detailed glowing sneakers
+        const leftFootGroup = new THREE.Group();
+        leftFootGroup.position.set(0, -0.5, 0.03);
+        leftShin.add(leftFootGroup);
+        const leftFootBody = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.22), jacketMat);
+        leftFootBody.castShadow = true;
+        leftFootGroup.add(leftFootBody);
+        const leftFootSole = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.23), glowingPink); // glowing pink soles!
+        leftFootSole.position.y = -0.05;
+        leftFootGroup.add(leftFootSole);
+
+        // Right Leg Hierarchical Joints
+        const rightThigh = new THREE.Group();
+        rightThigh.position.set(0.15, 0.95, 0);
+        charGroup.add(rightThigh);
+        const rightThighMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.05, 0.5, 8), jacketMat);
+        rightThighMesh.position.y = -0.25;
+        rightThighMesh.castShadow = true;
+        rightThigh.add(rightThighMesh);
+        
+        const kneeR = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.075, 0.075), glowingPink);
+        kneeR.position.set(0, -0.5, 0.04);
+        rightThigh.add(kneeR);
+
+        const rightShin = new THREE.Group();
+        rightShin.position.set(0, -0.5, 0);
+        rightThigh.add(rightShin);
+        const rightShinMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.04, 0.5, 8), jacketMat);
+        rightShinMesh.position.y = -0.25;
+        rightShinMesh.castShadow = true;
+        rightShin.add(rightShinMesh);
+
+        const rightFootGroup = new THREE.Group();
+        rightFootGroup.position.set(0, -0.5, 0.03);
+        rightShin.add(rightFootGroup);
+        const rightFootBody = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.08, 0.22), jacketMat);
+        rightFootBody.castShadow = true;
+        rightFootGroup.add(rightFootBody);
+        const rightFootSole = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.23), glowingPink);
+        rightFootSole.position.y = -0.05;
+        rightFootGroup.add(rightFootSole);
+
+        // Left Arm Joints
+        const leftShoulder = new THREE.Group();
+        leftShoulder.position.set(-0.26, 1.60, 0);
+        charGroup.add(leftShoulder);
+        const leftBicep = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.45, 8), jacketMat);
+        leftBicep.position.y = -0.225;
+        leftBicep.castShadow = true;
+        leftShoulder.add(leftBicep);
+
+        const leftForearm = new THREE.Group();
+        leftForearm.position.set(0, -0.45, 0);
+        leftShoulder.add(leftForearm);
+        const leftForearmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.45, 8), skinMat);
+        leftForearmMesh.position.y = -0.225;
+        leftForearmMesh.castShadow = true;
+        leftForearm.add(leftForearmMesh);
+        
+        // Cuff band
+        const cuffL = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.06, 8), glowingBlue);
+        cuffL.position.y = -0.15;
+        leftForearm.add(cuffL);
+
+        // Right Arm Joints
+        const rightShoulder = new THREE.Group();
+        rightShoulder.position.set(0.26, 1.60, 0);
+        charGroup.add(rightShoulder);
+        const rightBicep = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.45, 8), jacketMat);
+        rightBicep.position.y = -0.225;
+        rightBicep.castShadow = true;
+        rightShoulder.add(rightBicep);
+
+        // Forearm and cuff
+        const rightForearm = new THREE.Group();
+        rightForearm.position.set(0, -0.45, 0);
+        rightShoulder.add(rightForearm);
+        const rightForearmMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.045, 0.45, 8), skinMat);
+        rightForearmMesh.position.y = -0.225;
+        rightForearmMesh.castShadow = true;
+        rightForearm.add(rightForearmMesh);
+        
+        const cuffR = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.06, 8), glowingBlue);
+        cuffR.position.y = -0.15;
+        rightForearm.add(cuffR);
+
+        // --- Weather VFX Systems ---
+        // 1. High Density Falling Rain (1800 drops)
+        const rainCount = 1800;
+        const rainGeom = new THREE.BufferGeometry();
+        const rainPos = new Float32Array(rainCount * 3);
+        for (let i = 0; i < rainCount * 3; i += 3) {
+            rainPos[i] = (Math.random() - 0.5) * 16;
+            rainPos[i+1] = Math.random() * 26;
+            rainPos[i+2] = Math.random() * 95;
+        }
+        rainGeom.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+        const rainLines = new THREE.Points(rainGeom, new THREE.PointsMaterial({
+            color: 0x73d3ff,
+            size: 0.05,
+            transparent: true,
+            opacity: 0.65
+        }));
+        scene.add(rainLines);
+
+        // 2. Ground Rain Ripples (Splash Rings)
+        const rippleCount = 80;
+        const rippleGroup = new THREE.Group();
+        scene.add(rippleGroup);
+        const ripples = [];
+
+        for (let i = 0; i < rippleCount; i++) {
+            const ripGeo = new THREE.RingGeometry(0.02, 0.03, 8);
+            const ripMat = new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.8 });
+            const ripMesh = new THREE.Mesh(ripGeo, ripMat);
+            ripMesh.rotation.x = -Math.PI / 2;
+            ripMesh.position.set((Math.random() - 0.5) * 12, 0.01, Math.random() * 90);
+            rippleGroup.add(ripMesh);
+            ripples.push({
+                mesh: ripMesh,
+                scale: Math.random() * 2.5 + 0.5,
+                speed: Math.random() * 0.05 + 0.03,
+                val: 0
+            });
+        }
+
+        // 3. Water spray from sliding feet
+        const sprayCount = 100;
+        const sprayGeom = new THREE.BufferGeometry();
+        const sprayPos = new Float32Array(sprayCount * 3);
+        const sprayVel = [];
+        for (let i = 0; i < sprayCount; i++) {
+            sprayPos[i*3] = 0;
+            sprayPos[i*3+1] = 0.01;
+            sprayPos[i*3+2] = 0;
+            sprayVel.push(new THREE.Vector3(0, 0, 0));
+        }
+        sprayGeom.setAttribute('position', new THREE.BufferAttribute(sprayPos, 3));
+        const sprayParticles = new THREE.Points(sprayGeom, new THREE.PointsMaterial({
+            color: 0x90f0ff,
+            size: 0.08,
+            transparent: true,
+            opacity: 0.9
+        }));
+        sprayParticles.visible = false;
+        scene.add(sprayParticles);
+
+        // Neon step circles (Wallrun decals)
+        const wallDecalGeo = new THREE.RingGeometry(0.15, 0.20, 16);
+        const wallDecalMat = new THREE.MeshBasicMaterial({ color: 0xff00aa, transparent: true, opacity: 0.9 });
+        const wallDecal = new THREE.Mesh(wallDecalGeo, wallDecalMat);
+        wallDecal.rotation.y = Math.PI / 2;
+        wallDecal.position.set(4.68, 2.2, 0);
+        wallDecal.visible = false;
+        scene.add(wallDecal);
+
+        // Clock variables
+        let clock = new THREE.Clock();
+        let time = 0;
+
+        // Draw Visor Animated Eyes on Canvas
+        function drawVisorEyes(eyeState, blinkVal) {
+            visorCtx.fillStyle = '#020206'; // visor black background
+            visorCtx.fillRect(0, 0, 128, 64);
+            
+            // Draw dynamic tech UI scanlines
+            visorCtx.strokeStyle = 'rgba(0, 212, 255, 0.12)';
+            visorCtx.lineWidth = 1;
+            for (let y = 4; y < 64; y += 8) {
+                visorCtx.beginPath();
+                visorCtx.moveTo(0, y);
+                visorCtx.lineTo(128, y);
+                visorCtx.stroke();
+            }
+            
+            visorCtx.shadowColor = '#00ffff';
+            visorCtx.shadowBlur = 10;
+            visorCtx.strokeStyle = '#00ffff';
+            visorCtx.lineWidth = 4;
+            visorCtx.lineCap = 'round';
+            
+            if (blinkVal < 0.15) {
+                // Closed blinking eyes (- -)
+                visorCtx.beginPath();
+                visorCtx.moveTo(25, 32); visorCtx.lineTo(48, 32);
+                visorCtx.moveTo(80, 32); visorCtx.lineTo(103, 32);
+                visorCtx.stroke();
+            } else if (eyeState === "happy") {
+                // Squinting happy eyes (> <)
+                visorCtx.beginPath();
+                // Left eye
+                visorCtx.moveTo(26, 22); visorCtx.lineTo(44, 32); visorCtx.lineTo(26, 42);
+                // Right eye
+                visorCtx.moveTo(102, 22); visorCtx.lineTo(84, 32); visorCtx.lineTo(102, 42);
+                visorCtx.stroke();
+                
+                // Cute blush sparkles under the eyes (cyan crosses)
+                visorCtx.strokeStyle = '#ff00aa';
+                visorCtx.lineWidth = 2;
+                visorCtx.beginPath();
+                // Left cheek spark
+                visorCtx.moveTo(18, 48); visorCtx.lineTo(18, 54);
+                visorCtx.moveTo(15, 51); visorCtx.lineTo(21, 51);
+                // Right cheek spark
+                visorCtx.moveTo(110, 48); visorCtx.lineTo(110, 54);
+                visorCtx.moveTo(107, 51); visorCtx.lineTo(113, 51);
+                visorCtx.stroke();
+            } else if (eyeState === "focus") {
+                // Focus sharp eyes (\ /)
+                visorCtx.beginPath();
+                visorCtx.moveTo(26, 24); visorCtx.lineTo(46, 36);
+                visorCtx.moveTo(102, 24); visorCtx.lineTo(82, 36);
+                visorCtx.stroke();
+            } else {
+                // Default chevron smiling eyes (^ ^)
+                visorCtx.beginPath();
+                // Left chevron
+                visorCtx.moveTo(25, 36); visorCtx.lineTo(37, 24); visorCtx.lineTo(49, 36);
+                // Right chevron
+                visorCtx.moveTo(79, 36); visorCtx.lineTo(91, 24); visorCtx.lineTo(103, 36);
+                visorCtx.stroke();
+            }
+            visorTexture.needsUpdate = true;
+        }
+
+        // Animate Timeline and Postures (0.0s to 6.0s sequence)
+        function tick() {
+            let delta;
+            if (window.manualTime !== undefined) {
+                delta = 1.0 / 60.0;
+                time = window.manualTime;
+            } else {
+                delta = clock.getDelta();
+                time += delta;
+            }
+
+            const t = time % 6.0;
+
+            let pX = 0;
+            let pY = 0.6; // Feet offset
+            let pZ = 0;
+            let rotX = 0;
+            let rotY = 0;
+            let rotZ = 0;
+            let state = "run"; // run, vault, run2, wallrun, leap, slide, land_pose
+
+            // State Matrix Timeline
+            if (t < 0.7) {
+                state = "run";
+                pZ = t * 14.28; // Z: 0 to 10
+            } 
+            else if (t < 1.3) {
+                state = "vault";
+                const p = (t - 0.7) / 0.6;
+                pZ = 10.0 + p * 6.0; // Z: 10 to 16
+                pY = 0.6 + 1.25 * Math.sin(p * Math.PI);
+            } 
+            else if (t < 1.6) {
+                state = "run";
+                const p = (t - 1.3) / 0.3;
+                pZ = 16.0 + p * 6.0; // Z: 16 to 22
+            } 
+            else if (t < 2.8) {
+                const p = (t - 1.6) / 1.2;
+                pZ = 22.0 + p * 20.0; // Z: 22 to 42
+                
+                if (p < 0.25) {
+                    state = "run";
+                    const jumpP = p / 0.25;
+                    pX = jumpP * 4.65;
+                    pY = 0.6 + 1.6 * Math.sin(jumpP * (Math.PI / 2));
+                } else {
+                    state = "wallrun";
+                    pX = 4.65;
+                    pY = 2.2;
+                    rotZ = -0.42; // Tilt inwards
+                    
+                    wallDecal.visible = true;
+                    const legPulse = Math.floor(time * 12.0) % 2;
+                    wallDecal.position.set(4.68, 2.2, pZ);
+                    wallDecal.material.opacity = 0.9 - legPulse * 0.4;
+                }
+            } 
+            else if (t < 4.5) {
+                state = "leap";
+                wallDecal.visible = false;
+                const p = (t - 2.8) / 1.7;
+                pZ = 42.0 + p * 16.0; // Z: 42 to 58
+                pX = 4.65 - p * 4.65;
+                pY = 2.2 + 3.8 * Math.sin(p * Math.PI) - p * 2.2;
+                
+                if (p > 0.15 && p < 0.85) {
+                    const flipP = (p - 0.15) / 0.70;
+                    rotX = -flipP * Math.PI * 2.0; // 360 backflip
+                }
+            } 
+            else if (t < 5.3) {
+                state = "slide";
+                const p = (t - 4.5) / 0.8;
+                pZ = 58.0 + p * 8.0; // Z: 58 to 66
+                pY = 0.15;
+                rotX = -0.45;
+                
+                // Generate water spray
+                sprayParticles.visible = true;
+                const positions = sprayParticles.geometry.attributes.position.array;
+                for (let i = 0; i < sprayCount; i++) {
+                    if (Math.random() < 0.15) {
+                        positions[i*3] = pX + (Math.random() - 0.5) * 0.6;
+                        positions[i*3+1] = 0.02;
+                        positions[i*3+2] = pZ - 0.4;
+                        sprayVel[i] = new THREE.Vector3(
+                            (Math.random() - 0.5) * 2.5,
+                            Math.random() * 4.0 + 1.0,
+                            -Math.random() * 6.0 - 2.0
+                        );
+                    } else {
+                        positions[i*3] += sprayVel[i].x * 0.016;
+                        positions[i*3+1] += sprayVel[i].y * 0.016;
+                        positions[i*3+2] += sprayVel[i].z * 0.016;
+                        sprayVel[i].y -= 9.8 * 0.016; // gravity
+                    }
+                }
+                sprayParticles.geometry.attributes.position.needsUpdate = true;
+            } 
+            else {
+                state = "land_pose";
+                sprayParticles.visible = false;
+                pZ = 66.0;
+                pY = 0.35;
+                rotY = Math.PI; // Face camera!
+            }
+
+            // Set character coordinate offsets
+            charGroup.position.set(pX, pY, pZ);
+            charGroup.rotation.set(rotX, rotY, rotZ);
+
+            // --- Visor Eyes Animation ---
+            let eyeState = "smile";
+            if (state === "leap") eyeState = "focus";
+            else if (state === "slide") eyeState = "happy";
+            else if (state === "land_pose") eyeState = "happy";
+            
+            const blinkVal = time % 4.0;
+            drawVisorEyes(eyeState, blinkVal);
+
+            // --- Wind Physics (Twin-Tails, Scarf and Coattails) ---
+            const speed = time * 28.0;
+            const windStrength = (state === "run" || state === "wallrun") ? 0.7 : (state === "slide" ? 0.9 : 0.3);
+            
+            // Halo rotation
+            if (typeof halo !== 'undefined') {
+                halo.rotation.z += 0.035;
+            }
+            
+            tailJointsL.forEach((joint, idx) => {
+                joint.rotation.x = 0.5 * windStrength + Math.sin(speed - idx * 1.4) * 0.22 * windStrength;
+                joint.rotation.z = 0.2 + Math.cos(speed - idx * 0.8) * 0.12 * windStrength;
+            });
+            tailJointsR.forEach((joint, idx) => {
+                joint.rotation.x = 0.5 * windStrength + Math.sin(speed - idx * 1.4) * 0.22 * windStrength;
+                joint.rotation.z = -0.2 - Math.cos(speed - idx * 0.8) * 0.12 * windStrength;
+            });
+
+            scarfJoints.forEach((joint, idx) => {
+                joint.rotation.x = 0.65 * windStrength + Math.sin(speed - idx * 1.6) * 0.25 * windStrength;
+                joint.rotation.y = Math.cos(speed - idx * 1.2) * 0.15 * windStrength;
+            });
+
+            coatJointsL.forEach((joint, idx) => {
+                joint.rotation.x = 0.85 * windStrength + Math.sin(speed - idx * 1.5) * 0.28 * windStrength;
+                joint.rotation.z = -0.1 + Math.cos(speed - idx * 0.8) * 0.1 * windStrength;
+            });
+            coatJointsR.forEach((joint, idx) => {
+                joint.rotation.x = 0.85 * windStrength + Math.sin(speed - idx * 1.5) * 0.28 * windStrength;
+                joint.rotation.z = 0.1 - Math.cos(speed - idx * 0.8) * 0.1 * windStrength;
+            });
+
+            // --- Joint Skeletal Animations ---
+            if (state === "run") {
+                leftThigh.rotation.x = Math.sin(speed) * 0.75;
+                leftShin.rotation.x = (Math.sin(speed + Math.PI/2) > 0 ? Math.sin(speed + Math.PI/2) * 1.0 : 0.08);
+                
+                rightThigh.rotation.x = -Math.sin(speed) * 0.75;
+                rightShin.rotation.x = (Math.sin(-speed + Math.PI/2) > 0 ? Math.sin(-speed + Math.PI/2) * 1.0 : 0.08);
+                
+                leftShoulder.rotation.x = -Math.sin(speed) * 0.8;
+                leftForearm.rotation.x = -0.5 + Math.sin(speed) * 0.3;
+                
+                rightShoulder.rotation.x = Math.sin(speed) * 0.8;
+                rightForearm.rotation.x = -0.5 - Math.sin(speed) * 0.3;
+                
+                headGroup.rotation.x = 0.08;
+            }
+            else if (state === "vault") {
+                leftThigh.rotation.x = -1.1;
+                leftShin.rotation.x = 0.8;
+                rightThigh.rotation.x = -0.9;
+                rightShin.rotation.x = 0.7;
+                
+                leftShoulder.rotation.x = 1.6;
+                leftShoulder.rotation.z = -0.3;
+                rightShoulder.rotation.x = 1.6;
+                rightShoulder.rotation.z = 0.3;
+            }
+            else if (state === "wallrun") {
+                leftThigh.rotation.x = Math.sin(speed * 0.8) * 0.9;
+                leftShin.rotation.x = 0.6;
+                rightThigh.rotation.x = -Math.sin(speed * 0.8) * 0.9;
+                rightShin.rotation.x = 0.6;
+                
+                leftShoulder.rotation.x = -Math.sin(speed * 0.8) * 0.4;
+                rightShoulder.rotation.x = Math.sin(speed * 0.8) * 0.4;
+            }
+            else if (state === "leap") {
+                leftThigh.rotation.x = -1.4;
+                leftShin.rotation.x = 1.25;
+                rightThigh.rotation.x = -1.4;
+                rightShin.rotation.x = 1.25;
+                
+                leftShoulder.rotation.x = 1.8;
+                leftShoulder.rotation.z = -0.4;
+                rightShoulder.rotation.x = 1.8;
+                rightShoulder.rotation.z = 0.4;
+            }
+            else if (state === "slide") {
+                leftThigh.rotation.x = -1.35;
+                leftShin.rotation.x = 0.0;
+                rightThigh.rotation.x = 0.9;
+                rightShin.rotation.x = 1.3;
+                
+                leftShoulder.rotation.x = -1.0;
+                rightShoulder.rotation.x = 0.8;
+            }
+            else if (state === "land_pose") {
+                leftThigh.rotation.x = -1.25;
+                leftShin.rotation.x = 1.4;
+                rightThigh.rotation.x = -0.4;
+                rightShin.rotation.x = 0.6;
+                
+                leftShoulder.rotation.x = 1.2;
+                leftShoulder.rotation.y = 0.3;
+                rightShoulder.rotation.x = -0.8;
+                
+                headGroup.rotation.x = -0.3;
+            }
+
+            // --- Cinematic Camera Sequences ---
+            if (t < 0.7) {
+                camera.position.set(-0.8, 1.3, pZ + 4.8);
+                camera.lookAt(0, pY + 0.4, pZ + 0.5);
+            } 
+            else if (t < 1.3) {
+                camera.position.set(1.5, 0.9, pZ + 3.5);
+                camera.lookAt(pX, pY + 0.3, pZ);
+            } 
+            else if (t < 2.8) {
+                camera.position.set(-3.2, 2.5, pZ - 3.2);
+                camera.lookAt(pX, pY + 0.4, pZ + 1.5);
+            } 
+            else if (t < 4.5) {
+                camera.position.set(-0.5, 0.45, pZ + 3.0);
+                camera.lookAt(pX, pY + 0.5, pZ + 0.5);
+            } 
+            else if (t < 5.3) {
+                camera.position.set(0, 0.65, pZ + 4.2);
+                camera.lookAt(0, pY + 0.3, pZ - 1.0);
+            } 
+            else {
+                camera.position.set(0, 0.85, pZ - 3.2); // facing character
+                camera.lookAt(0, pY + 0.3, pZ);
+            }
+
+            // --- Rain Animation Logic ---
+            const rainPosArray = rainLines.geometry.attributes.position.array;
+            for (let i = 1; i < rainCount * 3; i += 3) {
+                rainPosArray[i] -= 0.65;
+                if (rainPosArray[i] < 0) {
+                    rainPosArray[i] = 26;
+                }
+            }
+            rainLines.geometry.attributes.position.needsUpdate = true;
+
+            // --- Ground Splashes (Water Ripples) ---
+            ripples.forEach(rip => {
+                rip.val += rip.speed;
+                if (rip.val > 1.0) {
+                    rip.val = 0;
+                    rip.mesh.position.set((Math.random() - 0.5) * 12, 0.01, pZ + Math.random() * 60 - 20);
+                }
+                const scaleVal = rip.val * rip.scale;
+                rip.mesh.scale.set(scaleVal, scaleVal, 1);
+                rip.mesh.material.opacity = (1.0 - rip.val) * 0.75;
+            });
+
+            // Slowly rotate dust/particles
+            rainLines.rotation.y += 0.001;
+
+            renderer.render(scene, camera);
+            requestAnimationFrame(tick);
+        }
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            renderer.setSize(width, height);
+        });
+
+        // Initialize clock & trigger
+        clock.start();
+        tick();
+
+        // Signal system ready
+        window.animationReady = true;
+    </script>
+</body>
+</html>
