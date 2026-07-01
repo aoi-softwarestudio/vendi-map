@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>VendiMap Debug</title>
+<style>
+body { background: #0a0a0f; color: #fff; font-family: monospace; padding: 20px; }
+h2 { color: #38bdf8; }
+.ok { color: #4ade80; }
+.err { color: #f87171; }
+.warn { color: #fbbf24; }
+pre { background: #111; padding: 10px; border-radius: 8px; overflow: auto; font-size: 12px; }
+</style>
+</head>
+<body>
+<h2>🔍 VendiMap Diagnostic Page</h2>
+<div id="results"></div>
+
+<script type="module">
+const log = (msg, type='ok') => {
+    const div = document.createElement('div');
+    div.className = type;
+    div.textContent = msg;
+    document.getElementById('results').appendChild(div);
+};
+
+const errors = [];
+window.addEventListener('error', e => {
+    errors.push(`[ERROR] ${e.message} (${e.filename}:${e.lineno})`);
+});
+window.addEventListener('unhandledrejection', e => {
+    errors.push(`[PROMISE REJECTION] ${e.reason}`);
+});
+
+// 1. Check Leaflet
+if (typeof L !== 'undefined') {
+    log('✅ Leaflet loaded: ' + L.version);
+} else {
+    log('❌ Leaflet NOT loaded', 'err');
+}
+
+// 2. Check data.js import
+try {
+    const { initialSpots } = await import('./data.js?v=20260529-rarity0');
+    log(`✅ data.js loaded: ${initialSpots.length} spots`);
+} catch(e) {
+    log('❌ data.js import FAILED: ' + e.message, 'err');
+}
+
+// 3. Check app.js import
+try {
+    await import('./app.js?v=20260609-fixed');
+    log('✅ app.js module loaded without throwing');
+} catch(e) {
+    log('❌ app.js import FAILED: ' + e.message, 'err');
+    const pre = document.createElement('pre');
+    pre.textContent = e.stack || e.toString();
+    document.getElementById('results').appendChild(pre);
+}
+
+// 4. Show any window errors captured
+setTimeout(() => {
+    if (errors.length > 0) {
+        log('⚠️ Window errors captured:', 'warn');
+        errors.forEach(e => log('  ' + e, 'err'));
+    } else {
+        log('✅ No window-level errors captured');
+    }
+}, 2000);
+</script>
+
+<script>
+// Non-module Leaflet check
+window.addEventListener('load', () => {
+    const div = document.createElement('div');
+    div.style.marginTop = '20px';
+    div.style.color = '#94a3b8';
+    div.textContent = 'Page loaded at: ' + new Date().toISOString();
+    document.body.appendChild(div);
+});
+</script>
+</body>
+</html>
