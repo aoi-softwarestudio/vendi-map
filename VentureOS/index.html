@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venture OS | AI Empire Command Center</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="i18n.js"></script>
+    <script src="config.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="brand-name">
+            <i class="fas fa-project-diagram"></i> VENTURE OS
+        </div>
+        <div style="margin-left: auto; display: flex; gap: 2rem; align-items: center;">
+            <div class="lang-switcher">
+                <button class="lang-btn" data-lang="ja" onclick="setLanguage('ja')">JP</button>
+                <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-dim); text-align: right;">
+                <div style="font-weight: 700; color: var(--text-main);">ADMIN</div>
+                <div>EXECUTIVE CHAIRMAN</div>
+            </div>
+            <img src="https://ui-avatars.com/api/?name=AD&background=00f2ff&color=050510" style="width: 40px; height: 40px; border-radius: 50%;">
+        </div>
+    </header>
+
+    <!-- Empire Macro Stats -->
+    <section class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-label" data-i18n="label-arr">Total Real Revenue (ARR)</div>
+            <div class="stat-value">¥0</div>
+            <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.5rem;">
+                実際の売上取引のみ集計
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label" data-i18n="label-users">Estimated Reach</div>
+            <div class="stat-value">0</div>
+            <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.5rem;">
+                購入数 × 推定リーチ
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label" data-i18n="label-efficiency">Operation Status</div>
+            <div class="stat-value">LIVE</div>
+            <div style="font-size: 0.7rem; color: var(--primary); margin-top: 0.5rem;">
+                全4サービス稼働中
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label" data-i18n="label-capital">Reinvestment Reserve</div>
+            <div class="stat-value">¥0</div>
+            <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.5rem;">
+                売上の30%を自動積立
+            </div>
+        </div>
+    </section>
+
+    <!-- Realtime Monetization Live Feed -->
+    <section class="live-transactions-section" style="margin: 2rem 10% 0; background: rgba(254, 194, 60, 0.05); border: 1px solid rgba(254, 194, 60, 0.2); padding: 1.5rem; border-radius: 20px; box-shadow: 0 0 20px rgba(254, 194, 60, 0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.1rem; font-weight: 900; color: #fec23c; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-bolt" style="color: #fec23c; animation: pulse 1.5s infinite;"></i>
+                REALTIME REVENUE TRANSACTIONS (ライブ決済フィード)
+            </h3>
+            <div style="font-size: 0.65rem; color: rgba(254, 194, 60, 0.7); font-family: monospace; background: rgba(254, 194, 60, 0.1); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(254, 194, 60, 0.2);">
+                GATEWAY: ACTIVE
+            </div>
+        </div>
+        <div id="live-tx-feed" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 5px;">
+            <div style="text-align: center; color: var(--text-dim); font-size: 0.8rem; padding: 1rem 0;">
+                決済データを受信中... (各SaaSでプレミアムを購入すると、ここにリアルタイム売上が同期されます)
+            </div>
+        </div>
+    </section>
+
+    <!-- Venture Portfolio -->
+    <div class="section-header" style="text-align: center; margin: 4rem 0 2rem;">
+        <h2 style="font-size: 2rem; font-weight: 900;" data-i18n="portfolio-title">Venture Portfolio</h2>
+        <p style="color: var(--text-dim);" data-i18n="portfolio-desc">Monitoring all active AI business units.</p>
+    </div>
+
+    <section class="ventures-grid">
+        <!-- VendiMap App -->
+        <div class="venture-card" data-venture="vendimap" onclick="window.open(VENTURE_LINKS.vendimap, '_blank')">
+            <i class="fas fa-map-marked-alt venture-icon" style="color: #00f2ff;"></i>
+            <h3 class="venture-title">VendiMap App</h3>
+            <p style="font-size: 0.85rem; color: var(--text-dim);">Vending IoT SaaS — 自販機・命名権マップ</p>
+            <div class="venture-status">
+                <span class="status-indicator status-active">LIVE</span>
+                <span class="mono" style="font-weight: 700; color: var(--growth); font-size: 0.75rem; text-shadow: 0 0 10px rgba(74,222,128,0.2);">収益化稼働中</span>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.7rem; color: var(--primary);"><i class="fas fa-external-link-alt"></i> OPEN PLATFORM</div>
+        </div>
+
+        <!-- SocialIntent AI -->
+        <div class="venture-card" data-venture="socialintent" onclick="window.open(VENTURE_LINKS.socialintent, '_blank')">
+            <i class="fas fa-bullseye venture-icon" style="color: #ec4899;"></i>
+            <h3 class="venture-title">SocialIntent AI</h3>
+            <p style="font-size: 0.85rem; color: var(--text-dim);">SEO/SNS SaaS — トレンド発掘・コピー生成</p>
+            <div class="venture-status">
+                <span class="status-indicator status-active">LIVE</span>
+                <span class="mono" style="font-weight: 700; color: var(--text-dim); font-size: 0.75rem;">収益化準備中</span>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.7rem; color: var(--primary);"><i class="fas fa-external-link-alt"></i> OPEN PLATFORM</div>
+        </div>
+
+        <!-- StudyFlow -->
+        <div class="venture-card closed" data-venture="studyflow" style="cursor: default;">
+            <i class="fas fa-graduation-cap venture-icon" style="color: #64748b;"></i>
+            <h3 class="venture-title" style="color: #64748b;">StudyFlow AI</h3>
+            <p style="font-size: 0.85rem; color: #475569;">Education SaaS — AI個人学習コーチ</p>
+            <div class="venture-status" style="border-top-color: rgba(255,255,255,0.02);">
+                <span class="status-indicator status-closed">CLOSED</span>
+                <span class="mono" style="font-weight: 700; color: #475569; font-size: 0.75rem;">事業終了</span>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.7rem; color: #475569;"><i class="fas fa-archive"></i> ARCHIVED</div>
+        </div>
+
+        <!-- Nova Capital -->
+        <div class="venture-card closed" data-venture="novacapital" style="cursor: default;">
+            <i class="fas fa-chart-line venture-icon" style="color: #64748b;"></i>
+            <h3 class="venture-title" style="color: #64748b;">Nova Capital</h3>
+            <p style="font-size: 0.85rem; color: #475569;">WealthTech — Niche Asset Alpha</p>
+            <div class="venture-status" style="border-top-color: rgba(255,255,255,0.02);">
+                <span class="status-indicator status-closed">CLOSED</span>
+                <span class="mono" style="font-weight: 700; color: #475569; font-size: 0.75rem;">事業終了</span>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.7rem; color: #475569;"><i class="fas fa-archive"></i> ARCHIVED</div>
+        </div>
+
+        <!-- LinguoSync -->
+        <div class="venture-card closed" data-venture="linguosync" style="cursor: default;">
+            <i class="fas fa-globe venture-icon" style="color: #64748b;"></i>
+            <h3 class="venture-title" style="color: #64748b;">LinguoSync</h3>
+            <p style="font-size: 0.85rem; color: #475569;">AdTech — 多言語AI動画翻訳</p>
+            <div class="venture-status" style="border-top-color: rgba(255,255,255,0.02);">
+                <span class="status-indicator status-closed">CLOSED</span>
+                <span class="mono" style="font-weight: 700; color: #475569; font-size: 0.75rem;">事業終了</span>
+            </div>
+            <div style="margin-top: 1rem; font-size: 0.7rem; color: #475569;"><i class="fas fa-archive"></i> ARCHIVED</div>
+        </div>
+    </section>
+
+    <!-- AI Agent Skills Command Center -->
+    <div class="section-header" style="text-align: center; margin: 4rem 0 2rem;">
+        <h2 style="font-size: 2rem; font-weight: 900; color: var(--primary); text-shadow: 0 0 15px var(--primary-glow);"><i class="fas fa-sitemap"></i> AI Org Chart & Agent Skills Command Center</h2>
+        <p style="color: var(--text-dim);">各専門部署に必要なエージェントスキルを管理・登録・監視する管制塔</p>
+    </div>
+
+    <section class="skills-center-section" style="margin: 0 10%; display: grid; grid-template-columns: 340px 1fr; gap: 2rem; min-height: 500px; margin-bottom: 4rem;">
+        <!-- Left: Department list styled like vertical node cards -->
+        <div class="dept-list-panel" style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.5rem; letter-spacing: 1px;">部署ノード選択</div>
+            
+            <div class="dept-node active" data-dept="COO" style="display: flex; align-items: center; gap: 15px; padding: 1.2rem; background: var(--bg-surface); border: 1px solid var(--primary); border-radius: 16px; cursor: pointer; transition: all 0.2s; box-shadow: 0 0 15px var(--primary-glow);">
+                <i class="fas fa-user-tie" style="font-size: 1.5rem; color: var(--primary);"></i>
+                <div style="text-align: left;">
+                    <div style="font-weight: 800; font-size: 0.95rem;">COO (最高執行責任者)</div>
+                    <div style="font-size: 0.7rem; color: var(--text-dim);">全体指揮・タスク委譲</div>
+                </div>
+            </div>
+
+            <div class="dept-node" data-dept="開発部門" style="display: flex; align-items: center; gap: 15px; padding: 1.2rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; transition: all 0.2s;">
+                <i class="fas fa-laptop-code" style="font-size: 1.5rem; color: #8b5cf6;"></i>
+                <div style="text-align: left;">
+                    <div style="font-weight: 800; font-size: 0.95rem;">開発部門</div>
+                    <div style="font-size: 0.7rem; color: var(--text-dim);">プロダクト実装・デバッグ</div>
+                </div>
+            </div>
+
+            <div class="dept-node" data-dept="マーケティング部門" style="display: flex; align-items: center; gap: 15px; padding: 1.2rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; transition: all 0.2s;">
+                <i class="fas fa-chart-pie" style="font-size: 1.5rem; color: #10b981;"></i>
+                <div style="text-align: left;">
+                    <div style="font-weight: 800; font-size: 0.95rem;">マーケティング部門</div>
+                    <div style="font-size: 0.7rem; color: var(--text-dim);">プロモーション・データ分析</div>
+                </div>
+            </div>
+
+            <div class="dept-node" data-dept="リサーチ部門" style="display: flex; align-items: center; gap: 15px; padding: 1.2rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; transition: all 0.2s;">
+                <i class="fas fa-search" style="font-size: 1.5rem; color: #00f2ff;"></i>
+                <div style="text-align: left;">
+                    <div style="font-weight: 800; font-size: 0.95rem;">リサーチ部門</div>
+                    <div style="font-size: 0.7rem; color: var(--text-dim);">トレンド調査・市場仮説</div>
+                </div>
+            </div>
+
+            <div class="dept-node" data-dept="動画作成部門" style="display: flex; align-items: center; gap: 15px; padding: 1.2rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; transition: all 0.2s;">
+                <i class="fas fa-film" style="font-size: 1.5rem; color: #ff007a;"></i>
+                <div style="text-align: left;">
+                    <div style="font-weight: 800; font-size: 0.95rem;">動画作成部門</div>
+                    <div style="font-size: 0.7rem; color: var(--text-dim);">プロモーション動画構成・編集</div>
+                </div>
+            </div>
+
+            <div class="dept-node" data-dept="ライティング部門" style="display: flex; align-items: center; gap: 15px; padding: 1.2rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; transition: all 0.2s;">
+                <i class="fas fa-pen-nib" style="font-size: 1.5rem; color: #ec4899;"></i>
+                <div style="text-align: left;">
+                    <div style="font-weight: 800; font-size: 0.95rem;">ライティング部門</div>
+                    <div style="font-size: 0.7rem; color: var(--text-dim);">SEO対策・コピーライティング</div>
+                </div>
+            </div>
+
+            <div class="dept-node" data-dept="秘書" style="display: flex; align-items: center; gap: 15px; padding: 1.2rem; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; cursor: pointer; transition: all 0.2s;">
+                <i class="fas fa-calendar-alt" style="font-size: 1.5rem; color: #fec23c;"></i>
+                <div style="text-align: left;">
+                    <div style="font-weight: 800; font-size: 0.95rem;">秘書</div>
+                    <div style="font-size: 0.7rem; color: var(--text-dim);">予定管理・ToDo整理</div>
+                </div>
+            </div>
+
+            <button id="btnOpenSkillModal" class="btn-action" style="margin-top: 1rem; background: linear-gradient(135deg, var(--primary), #0077ff); border: none; padding: 1rem; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 0 15px var(--primary-glow); width: 100%;">
+                <i class="fas fa-plus-circle"></i> スキルを新規登録
+            </button>
+        </div>
+
+        <!-- Right: Detail Panel displaying skills for selected department -->
+        <div class="skills-detail-panel" style="background: var(--bg-surface); border: 1px solid var(--border); border-radius: 24px; padding: 2.5rem; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); overflow-y: auto; max-height: 700px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem;">
+                <h3 id="currentDeptTitle" style="font-size: 1.5rem; font-weight: 900; color: var(--primary); display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-user-tie"></i> COO (最高執行責任者) スキル一覧
+                </h3>
+                <div id="skillsCountBadge" style="background: rgba(0, 242, 255, 0.1); border: 1px solid var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; color: var(--primary); font-family: monospace;">
+                    SKILLS REGISTERED: 0
+                </div>
+            </div>
+
+            <!-- List of skills for selected department -->
+            <div id="deptSkillsList" style="display: flex; flex-direction: column; gap: 2rem;">
+                <!-- Dynamically populated skills -->
+            </div>
+        </div>
+    </section>
+
+    <!-- System Health -->
+    <section style="margin: 4rem 10%; background: var(--bg-surface); padding: 2rem; border-radius: 20px; border: 1px solid var(--border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h3 style="font-size: 1.2rem; font-weight: 900;"><i class="fas fa-shield-alt" style="color: var(--primary);"></i> <span data-i18n="system-health">SYSTEM_HEALTH_AND_SECURITY</span></h3>
+            <div class="mono" style="font-size: 0.7rem; color: var(--primary);">STATUS: OPERATIONAL</div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.5rem;">API_LATENCY</div>
+                <div style="font-size: 1.5rem; font-weight: 900;">24ms</div>
+                <div style="height: 4px; background: rgba(0,242,255,0.1); border-radius: 2px; margin-top: 0.5rem;"><div style="width: 15%; height: 100%; background: var(--primary); border-radius: 2px;"></div></div>
+            </div>
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.5rem;">DATABASE_LOAD</div>
+                <div style="font-size: 1.5rem; font-weight: 900;">4.2%</div>
+                <div style="height: 4px; background: rgba(0,242,255,0.1); border-radius: 2px; margin-top: 0.5rem;"><div style="width: 4%; height: 100%; background: var(--primary); border-radius: 2px;"></div></div>
+            </div>
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.5rem;">SECURITY_THREATS</div>
+                <div style="font-size: 1.5rem; font-weight: 900;">0</div>
+                <div style="font-size: 0.6rem; color: var(--growth); margin-top: 0.5rem;">ENCRYPTION: AES-256 ACTIVE</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI CEO Insights -->
+    <section class="ceo-section">
+        <div class="ceo-card">
+            <div class="ceo-avatar">
+                <i class="fas fa-brain floating" style="font-size: 6rem; color: var(--primary);"></i>
+            </div>
+            <div class="ceo-message">
+                <h3 style="color: var(--primary); margin-bottom: 1rem;" data-i18n="ceo-report-title">AI EXECUTIVE CHAIRMAN REPORT</h3>
+                <p>
+                    <!-- Injected by i18n.js -->
+                </p>
+                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                    <button class="btn-action" data-i18n="btn-synergy" style="background: var(--primary); border: none; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer;">全事業シナジーを実行</button>
+                    <button style="background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer;" data-i18n="btn-report">詳細レポートを表示</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="empire.js"></script>
+    <script>
+        // Venture OS - AI CEO Executive Chairman System & Interactive Chat
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Injected Modal CSS for SF Holo Style
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .ceo-modal {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(5, 5, 16, 0.85);
+                    backdrop-filter: blur(15px);
+                    z-index: 5000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    opacity: 0;
+                    pointer-events: none;
+                    transition: opacity 0.3s ease;
+                }
+                .ceo-modal.open {
+                    opacity: 1;
+                    pointer-events: auto;
+                }
+                .ceo-modal-content {
+                    background: rgba(15, 15, 30, 0.95);
+                    border: 2px solid var(--primary);
+                    box-shadow: 0 0 30px var(--primary-glow);
+                    border-radius: 24px;
+                    width: 90%;
+                    max-width: 650px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    padding: 2.5rem;
+                    position: relative;
+                    transform: scale(0.9);
+                    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                .ceo-modal.open .ceo-modal-content {
+                    transform: scale(1);
+                }
+                .ceo-modal-close {
+                    position: absolute;
+                    top: 1.5rem;
+                    right: 1.5rem;
+                    background: transparent;
+                    border: none;
+                    color: var(--text-dim);
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    transition: color 0.2s;
+                }
+                .ceo-modal-close:hover {
+                    color: var(--primary);
+                }
+                .hologram-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    margin-bottom: 1.5rem;
+                    border-bottom: 1px solid var(--border);
+                    padding-bottom: 1rem;
+                }
+                .hologram-title {
+                    color: var(--primary);
+                    font-weight: 900;
+                    font-size: 1.25rem;
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                }
+                .hologram-pulse {
+                    width: 10px;
+                    height: 10px;
+                    background: var(--primary);
+                    border-radius: 50%;
+                    box-shadow: 0 0 10px var(--primary);
+                    animation: pulse 1.5s infinite;
+                }
+                @keyframes pulse {
+                    0% { opacity: 0.3; }
+                    50% { opacity: 1; }
+                    100% { opacity: 0.3; }
+                }
+                .synergy-spinner {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 1.5rem;
+                    padding: 3rem 0;
+                }
+                .spinner-ring {
+                    width: 60px;
+                    height: 60px;
+                    border: 4px solid rgba(0, 242, 255, 0.1);
+                    border-top: 4px solid var(--primary);
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                .btn-modal-action {
+                    background: var(--primary);
+                    border: none;
+                    color: var(--bg-dark);
+                    font-weight: 800;
+                    padding: 0.8rem 1.8rem;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    margin-top: 1.5rem;
+                    transition: all 0.2s;
+                }
+                .btn-modal-action:hover {
+                    box-shadow: 0 0 15px var(--primary);
+                    transform: translateY(-2px);
+                }
+                .report-section {
+                    margin-bottom: 1.5rem;
+                }
+                .report-section h4 {
+                    color: var(--primary);
+                    margin-bottom: 0.5rem;
+                    font-size: 0.95rem;
+                }
+                .report-section p {
+                    color: var(--text-dim);
+                    font-size: 0.85rem;
+                    line-height: 1.6;
+                }
+            `;
+            document.head.appendChild(style);
+
+            // 2. Generate Modal Element
+            const modal = document.createElement('div');
+            modal.className = 'ceo-modal';
+            modal.id = 'ceoModal';
+            modal.innerHTML = `
+                <div class="ceo-modal-content">
+                    <button class="ceo-modal-close" id="ceoModalClose"><i class="fas fa-times"></i></button>
+                    <div id="ceoModalBody"></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            const modalClose = document.getElementById('ceoModalClose');
+            modalClose.addEventListener('click', () => {
+                modal.classList.remove('open');
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('open');
+            });
+
+            // 3. Register Event Listeners for buttons
+            const btnSynergy = document.querySelector('button[data-i18n="btn-synergy"]');
+            const btnReport = document.querySelector('button[data-i18n="btn-report"]');
+
+            if (btnSynergy) {
+                btnSynergy.addEventListener('click', () => {
+                    openSynergyModal();
+                });
+            }
+
+            if (btnReport) {
+                btnReport.addEventListener('click', () => {
+                    openReportModal();
+                });
+            }
+        });
+
+        // 4. Synergy Execution Modal Flow
+        function openSynergyModal() {
+            const modal = document.getElementById('ceoModal');
+            const modalBody = document.getElementById('ceoModalBody');
+            const lang = localStorage.getItem('ventureos_lang') || 'ja';
+
+            modal.classList.add('open');
+
+            // Step 1: Show Synergy Loading Animation
+            modalBody.innerHTML = `
+                <div class="hologram-header">
+                    <div class="hologram-pulse"></div>
+                    <div class="hologram-title">${lang === 'ja' ? 'シナジーエンジン起動中' : 'INITIATING SYNERGY ENGINE'}</div>
+                </div>
+                <div class="synergy-spinner">
+                    <div class="spinner-ring"></div>
+                    <p id="synergyStatus" style="color: var(--text-dim); font-size: 0.9rem; font-family: monospace;"></p>
+                </div>
+            `;
+
+            const statusEl = document.getElementById('synergyStatus');
+            const statuses = lang === 'ja' ? [
+                "StudyFlow AI の合宿・学習拠点割り当てモデルを計算中...",
+                "LinguoSync プロモーション広告を英語・中国語へ多言語翻訳マッピング中...",
+                "NovaCapital 市場インデックスへの再投資ポートフォリオをシミュレート中...",
+                "帝国シナジーの最適化完了！"
+            ] : [
+                "Calculating StudyFlow AI study retreat matching logic...",
+                "Translating LinguoSync promotions to English & Chinese markets...",
+                "Simulating NovaCapital market index reinvestment pool...",
+                "Synergy Optimization Complete!"
+            ];
+
+            let step = 0;
+            statusEl.innerText = statuses[step];
+
+            const interval = setInterval(() => {
+                step++;
+                if (step < statuses.length) {
+                    statusEl.innerText = statuses[step];
+                } else {
+                    clearInterval(interval);
+                    // Show Success synergy output
+                    showSynergySuccess(modalBody, lang);
+                }
+            }, 1000);
+        }
+
+        function showSynergySuccess(container, lang) {
+            if (lang === 'ja') {
+                container.innerHTML = `
+                    <div class="hologram-header">
+                        <div class="hologram-pulse"></div>
+                        <div class="hologram-title">シナジー最適化完了報告書</div>
+                    </div>
+                    <div class="report-section">
+                        <h4 style="color: var(--growth);"><i class="fas fa-check-circle"></i> 成功: 全事業最適化が完了しました</h4>
+                        <p style="margin-top: 1rem;">
+                            AI CEOによる全事業連携が実行され、以下の統合相乗効果が確立されました。
+                        </p>
+                    </div>
+
+                    <div class="report-section">
+                        <h4>🌐 LinguoSync ✖️ 📊 NovaCapital</h4>
+                        <p>LinguoSyncのAIアバター自動吹き替え技術を活用し、NovaCapitalの富裕層向けインデックス情報をグローバル展開。海外市場からの流入ARR予測値を +¥15,000,000 に修正しました。</p>
+                    </div>
+                    <div class="report-section">
+                        <h4>💰 資本再投資の自動最適化</h4>
+                        <p>再投資プール金のうち、40%をLinguoSyncのアドテク成長枠へ、30%をStudyFlowの機能追加へ、30%をNovaCapitalのシステム冗長性強化へ自律配分しました。</p>
+                    </div>
+                    <button class="btn-modal-action" onclick="document.getElementById('ceoModal').classList.remove('open')">適用してダッシュボードに戻る</button>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="hologram-header">
+                        <div class="hologram-pulse"></div>
+                        <div class="hologram-title">Synergy Optimization Report</div>
+                    </div>
+                    <div class="report-section">
+                        <h4 style="color: var(--growth);"><i class="fas fa-check-circle"></i> SUCCESS: Integration Activated</h4>
+                        <p style="margin-top: 1rem;">
+                            The AI CEO Synergy Engine has successfully optimized cross-empire business pipelines:
+                        </p>
+                    </div>
+
+                    <div class="report-section">
+                        <h4>🌐 LinguoSync ✖️ 📊 NovaCapital</h4>
+                        <p>Using LinguoSync voice synthesis technology to translate NovaCapital analytical indexes. Estimated global capital inflow ARR projected at +$100,000 USD.</p>
+                    </div>
+                    <div class="report-section">
+                        <h4>💰 Autonomous Capital Reinvestment</h4>
+                        <p>Allocated 40% of the reinvestment pool to LinguoSync's marketing scale, 30% to StudyFlow features, and 30% to NovaCapital system durability.</p>
+                    </div>
+                    <button class="btn-modal-action" onclick="document.getElementById('ceoModal').classList.remove('open')">Apply & Close</button>
+                `;
+            }
+        }
+
+        // 5. Detailed Executive Report Modal Flow
+        function openReportModal() {
+            const modal = document.getElementById('ceoModal');
+            const modalBody = document.getElementById('ceoModalBody');
+            const lang = localStorage.getItem('ventureos_lang') || 'ja';
+
+            modal.classList.add('open');
+
+            if (lang === 'ja') {
+                modalBody.innerHTML = `
+                    <div class="hologram-header">
+                        <div class="hologram-pulse"></div>
+                        <div class="hologram-title">AI 会長 経営詳細監査報告書</div>
+                    </div>
+                    <div class="report-section">
+                        <p style="font-size: 0.95rem; font-style: italic; color: var(--primary);">「Chairman Soda, 現在の帝国経営状態は極めて健全であり、純利益率は前月比で4.2%上昇しています。」</p>
+                    </div>
+                    <div class="report-section">
+                        <h4>📈 ARR成長マトリクス</h4>
+                        <p>Nova Capital (¥42.8M) が主要なポートフォリオシェアを占めており、成長率は LinguoSync (+42%) がリードしています。</p>
+                    </div>
+                    <div class="report-section">
+                        <h4>🛡️ システム安全性 & 自律最適化</h4>
+                        <p>全インフラはAES-256暗号化のもと、平均レスポンスタイム24msで健全に動作。セキュリティ脅威 of ブロック数は0件を記録しています。</p>
+                    </div>
+                    <div class="report-section">
+                        <h4>🎯 次期戦略アクションアイテム</h4>
+                        <p>1. **StudyFlow AI の単語帳カード表示ロジックのデバッグ** を最優先で実施すること。<br>
+                           2. **NovaCapital のローカルGemini API通信プロキシ** のネットワーク耐性を改善すること。<br>
+                           3. **各アプリのモバイル端末最適化** を図ること。</p>
+                    </div>
+                    <button class="btn-modal-action" onclick="document.getElementById('ceoModal').classList.remove('open')">確認しました</button>
+                `;
+            } else {
+                modalBody.innerHTML = `
+                    <div class="hologram-header">
+                        <div class="hologram-pulse"></div>
+                        <div class="hologram-title">AI Chairman Detailed Business Audit</div>
+                    </div>
+                    <div class="report-section">
+                        <p style="font-size: 0.95rem; font-style: italic; color: var(--primary);">"Chairman Soda, current business operations are fully optimized with net margins up 4.2% month-over-month."</p>
+                    </div>
+                    <div class="report-section">
+                        <h4>📈 ARR Growth Matrix</h4>
+                        <p>Nova Capital (¥42.8M) secures the core market share, with LinguoSync leading ARR growth speed at +42%.</p>
+                    </div>
+                    <div class="report-section">
+                        <h4>🛡️ System Integrity & Security</h4>
+                        <p>All cloud node infrastructures operate securely under AES-256, maintaining an average API latency of 24ms with 0 threat incidents detected.</p>
+                    </div>
+                    <div class="report-section">
+                        <h4>🎯 Upcoming Strategic Milestones</h4>
+                        <p>1. **Debug StudyFlow AI's flashcards display rendering module** (Top Priority).<br>
+                           2. **Enhance connection durability for NovaCapital's local Gemini proxy** (Medium Priority).<br>
+                           3. **Complete responsive scaling adjustments across all mobile viewports**.</p>
+                    </div>
+                    <button class="btn-modal-action" onclick="document.getElementById('ceoModal').classList.remove('open')">Understood</button>
+                `;
+            }
+        }
+    </script>
+    <!-- Skill Registration Modal -->
+    <div id="skillRegisterModal" class="ceo-modal">
+        <div class="ceo-modal-content" style="max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; background: rgba(10,10,25,0.98); border: 1px solid var(--primary-glow); border-radius: 24px; padding: 2.5rem; position: relative;">
+            <button class="ceo-modal-close" id="btnMinimizeSkillModal" style="position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: var(--text-dim); font-size: 1.25rem; cursor: pointer;"><i class="fas fa-times"></i></button>
+            
+            <h3 style="font-size: 1.5rem; font-weight: 900; color: var(--primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+                <i class="fas fa-network-wired"></i> エージェントスキル新規登録
+            </h3>
+            
+            <!-- AI Generation Assistant Section -->
+            <div style="background: rgba(0, 242, 255, 0.03); border: 1px solid rgba(0, 242, 255, 0.15); padding: 1.2rem; border-radius: 16px; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.85rem; color: var(--primary);">
+                    <i class="fas fa-magic"></i> AI Agent Skill Auto-Generator (AI下書き作成)
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">トピックを入力して「自動生成」を押すと、Gemini AIが目的やチェックリストをドラフト作成します。</div>
+                <div style="display: flex; gap: 10px; margin-top: 5px;">
+                    <input type="text" id="aiSkillTopic" placeholder="例: A/B Testing, API Gateway Integration..." style="flex: 1; background: rgba(5,5,16,0.8); border: 1px solid var(--border); padding: 0.6rem 0.8rem; border-radius: 8px; color: #fff; font-size: 0.85rem; outline: none;">
+                    <button id="btnGenerateAISkill" style="background: var(--primary); border: none; color: var(--bg-dark); font-weight: 800; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.85rem;">
+                        <i class="fas fa-cog fa-spin" id="aiGenSpinner" style="display: none;"></i>
+                        <span id="aiGenText">自動生成</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Standard Registration Form -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.2rem;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 0.75rem; font-weight: 800; color: var(--text-dim);">アサイン部署</label>
+                    <select id="regSkillDept" style="background: rgba(15,15,30,0.95); border: 1px solid var(--border); padding: 0.6rem; border-radius: 8px; color: #fff; font-weight: 700; outline: none;">
+                        <option value="COO">COO (最高執行責任者)</option>
+                        <option value="開発部門">開発部門</option>
+                        <option value="マーケティング部門">マーケティング部門</option>
+                        <option value="リサーチ部門">リサーチ部門</option>
+                        <option value="動画作成部門">動画作成部門</option>
+                        <option value="ライティング部門">ライティング部門</option>
+                        <option value="秘書">秘書</option>
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 0.75rem; font-weight: 800; color: var(--text-dim);">ファイル名 (.md)</label>
+                    <input type="text" id="regSkillFilename" placeholder="api_integration_skill.md" style="background: rgba(15,15,30,0.95); border: 1px solid var(--border); padding: 0.6rem; border-radius: 8px; color: #fff; outline: none;">
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 1.2rem;">
+                <label style="font-size: 0.75rem; font-weight: 800; color: var(--text-dim);">スキルタイトル (H1)</label>
+                <input type="text" id="regSkillTitle" placeholder="Agent Skill: Systematic API Integration" style="background: rgba(15,15,30,0.95); border: 1px solid var(--border); padding: 0.6rem; border-radius: 8px; color: #fff; outline: none; width: 100%;">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 1.2rem;">
+                <label style="font-size: 0.75rem; font-weight: 800; color: var(--text-dim);">目的 (Purpose)</label>
+                <textarea id="regSkillPurpose" rows="3" placeholder="このスキルが対象とする目的やビジネス価値を定義します..." style="background: rgba(15,15,30,0.95); border: 1px solid var(--border); padding: 0.6rem; border-radius: 8px; color: #fff; outline: none; width: 100%; resize: vertical; font-family: inherit; font-size: 0.85rem; line-height: 1.5;"></textarea>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 1.2rem;">
+                <label style="font-size: 0.75rem; font-weight: 800; color: var(--text-dim);">実行チェックリスト (Phases & Steps)</label>
+                <textarea id="regSkillChecklist" rows="5" placeholder="### Phase 1: ...&#10;1. ◯◯を行う..." style="background: rgba(15,15,30,0.95); border: 1px solid var(--border); padding: 0.6rem; border-radius: 8px; color: #fff; outline: none; width: 100%; resize: vertical; font-family: monospace; font-size: 0.8rem; line-height: 1.5;"></textarea>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 1.2rem;">
+                <label style="font-size: 0.75rem; font-weight: 800; color: var(--text-dim);">期待する成果物フォーマット (Deliverable Format)</label>
+                <textarea id="regSkillDeliverable" rows="3" placeholder="成果物名とフォーマットを定義します..." style="background: rgba(15,15,30,0.95); border: 1px solid var(--border); padding: 0.6rem; border-radius: 8px; color: #fff; outline: none; width: 100%; resize: vertical; font-family: inherit; font-size: 0.85rem; line-height: 1.5;"></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid var(--border); padding-top: 1.2rem; margin-top: 1.2rem;">
+                <button id="btnCancelSkillReg" style="background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer;">キャンセル</button>
+                <button id="btnSubmitSkillReg" style="background: linear-gradient(135deg, var(--primary), #0077ff); border: none; color: var(--bg-dark); font-weight: 900; padding: 0.6rem 1.8rem; border-radius: 8px; cursor: pointer; box-shadow: 0 0 15px var(--primary-glow);">登録を実行する</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
