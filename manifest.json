@@ -1,0 +1,17 @@
+{
+  "short_name": "VendiMap",
+  "name": "VendiMap - 全国自販機マップ",
+  "icons": [
+    {
+      "src": "vendix_logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/index.html",
+  "background_color": "#080d1a",
+  "theme_color": "#080d1a",
+  "display": "standalone",
+  "orientation": "portrait"
+}
