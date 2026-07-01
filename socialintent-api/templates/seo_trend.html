@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【分析レポート】「{{ keyword }}」の主要SNSトレンドと攻略相性 | SocialIntent AI</title>
+    
+    <!-- Meta tags for SEO & Social Sharing -->
+    <meta name="description" content="AIが分析した「{{ keyword }}」の主要SNS（YouTube、Instagram、TikTok、X、SEO）攻略データ。動画フック案や競合差別化のポイントを可視化。">
+    <meta name="keywords" content="{{ keyword }}, SNSトレンド, AI分析, マーケティング, 動画台本, 個人開発">
+    
+    <!-- OGP Tags -->
+    <meta property="og:title" content="【分析レポート】「{{ keyword }}」の主要SNSトレンドと攻略相性 | SocialIntent AI">
+    <meta property="og:description" content="AIが分析した「{{ keyword }}」の主要SNS攻略データ。最適なプラットフォームと動画フック案を公開中。">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://socialintent-trends.onrender.com/trends/{{ encoded_keyword }}">
+    <meta property="og:site_name" content="SocialIntent AI">
+    
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+JP:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #05060b;
+            --bg-card: #0b0d19;
+            --primary: #f43f5e;
+            --primary-glow: rgba(244, 63, 94, 0.15);
+            --accent: #d946ef;
+            --text-main: #f3f4f6;
+            --text-dim: #9ca3af;
+            --glass-border: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo i {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: #ffffff;
+            line-height: 1.3;
+        }
+
+        .summary-box {
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 4px solid var(--primary);
+            padding: 1rem 1.25rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            color: var(--text-dim);
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        @media (min-width: 600px) {
+            .score-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .score-item {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 1.25rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .score-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(244, 63, 94, 0.3);
+        }
+
+        .score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .platform-name {
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .platform-score {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .platform-trend {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            line-height: 1.4;
+        }
+
+        .hook-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .hook-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hook-list {
+            list-style: none;
+        }
+
+        .hook-item {
+            background: rgba(244, 63, 94, 0.05);
+            border: 1px dashed rgba(244, 63, 94, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 10px;
+        }
+
+        .hook-item i {
+            color: var(--primary);
+            margin-top: 3px;
+        }
+
+        .cta-container {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            border-radius: 30px;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(244, 63, 94, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(244, 63, 94, 0.5);
+        }
+
+        .premium-teaser {
+            background: rgba(217, 70, 239, 0.05);
+            border: 1px solid rgba(217, 70, 239, 0.15);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .premium-teaser h4 {
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .premium-teaser p {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        footer {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            margin-top: 2rem;
+        }
+
+        footer a {
+            color: var(--text-dim);
+            text-decoration: none;
+            margin: 0 8px;
+        }
+
+        footer a:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo">
+            <i class="fas fa-brain"></i> SocialIntent AI
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-dim);">マルチチャネルSNSトレンド・インテント分析</p>
+    </header>
+
+    <div class="card">
+        <h1>「{{ keyword }}」のSNSトレンド＆チャネル相性レポート</h1>
+        
+        <div class="summary-box">
+            <strong>AI要約:</strong> {{ summary }}
+        </div>
+
+        <div class="score-grid">
+            <div class="score-item">
+                <div class="score-header">
+                    <span class="platform-name" style="color: #ff0000;"><i class="fab fa-youtube"></i> YouTube</span>
+                    <span class="platform-score">{{ youtube_score }}/100</span>
+                </div>
+                <div class="platform-trend">{{ youtube_trend }}</div>
+            </div>
+
+            <div class="score-item">
+                <div class="score-header">
+                    <span class="platform-name" style="color: #e1306c;"><i class="fab fa-instagram"></i> Instagram</span>
+                    <span class="platform-score">{{ instagram_score }}/100</span>
+                </div>
+                <div class="platform-trend">{{ instagram_trend }}</div>
+            </div>
+
+            <div class="score-item">
+                <div class="score-header">
+                    <span class="platform-name" style="color: #00f2fe;"><i class="fab fa-tiktok"></i> TikTok</span>
+                    <span class="platform-score">{{ tiktok_score }}/100</span>
+                </div>
+                <div class="platform-trend">{{ tiktok_trend }}</div>
+            </div>
+
+            <div class="score-item">
+                <div class="score-header">
+                    <span class="platform-name" style="color: #ffffff;"><i class="fab fa-x-twitter"></i> X (Twitter)</span>
+                    <span class="platform-score">{{ x_score }}/100</span>
+                </div>
+                <div class="platform-trend">{{ x_trend }}</div>
+            </div>
+            
+            <div class="score-item" style="grid-column: span 1;">
+                <div class="score-header">
+                    <span class="platform-name" style="color: #4285f4;"><i class="fab fa-google"></i> Google SEO</span>
+                    <span class="platform-score">{{ seo_score }}/100</span>
+                </div>
+                <div class="platform-trend">{{ seo_trend }}</div>
+            </div>
+        </div>
+
+        <div class="hook-section">
+            <div class="hook-title">
+                <i class="fas fa-lightbulb" style="color: #eab308;"></i> 💡 推奨動画フックコピー
+            </div>
+            <ul class="hook-list">
+                {% for hook in hooks %}
+                <li class="hook-item">
+                    <i class="fas fa-play-circle"></i>
+                    <span>「{{ hook }}」</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="premium-teaser">
+            <h4><i class="fas fa-crown"></i> プレミアム機能のプレビュー</h4>
+            <p>このキーワードに対する **「競合差別化・ポジショニング戦略」** および **「動画用実用台本（ショート構成）」** は、プレミアム版（¥580 買い切り・永久アクセス）で瞬時に解放されます。</p>
+        </div>
+
+        <div class="cta-container">
+            <a href="https://socialintent-trends.onrender.com/?keyword={{ encoded_keyword }}" class="btn-cta">
+                <i class="fas fa-search-plus"></i> 対話的に分析チャートを表示（無料）
+            </a>
+        </div>
+    </div>
+
+    <footer>
+        <div style="margin-bottom: 0.5rem;">
+            <a href="https://socialintent-trends.onrender.com/">SocialIntent AI ホーム</a> | 
+            <a href="https://socialintent-trends.onrender.com/#privacy">プライバシーポリシー</a> | 
+            <a href="https://socialintent-trends.onrender.com/#terms">利用規約</a>
+        </div>
+        <div>&copy; 2026 Aoi Software Studio. All Rights Reserved.</div>
+    </footer>
+</div>
+
+</body>
+</html>
