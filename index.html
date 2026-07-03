@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="leaflet.css?v=20260610-v4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
-    <link rel="stylesheet" href="style.css?v=1783046402">
+    <link rel="stylesheet" href="style.css?v=1783047442">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -533,7 +533,13 @@
         <!-- Camera Controls -->
         <div class="scanner-controls">
             <button id="closeCameraBtn" class="scanner-btn btn-close-cam" title="閉じる"><i class="fas fa-times"></i></button>
-            <button id="captureScanBtn" class="scanner-btn btn-capture-cam" title="スキャン開始" style="flex: 2;"><i class="fas fa-camera"></i> <i class="fas fa-robot"></i> 解析</button>
+            <button id="captureScanBtn" class="scanner-btn btn-capture-cam" title="スキャン開始">
+                <div class="inner-circle"></div>
+                <span class="scan-btn-text">
+                    <i class="fas fa-robot"></i>
+                    <span>解析</span>
+                </span>
+            </button>
             <button id="switchCameraBtn" class="scanner-btn btn-switch-cam" title="カメラ切替"><i class="fas fa-arrows-rotate"></i></button>
         </div>
     </div>
@@ -587,6 +593,6 @@
     <div id="flashOverlay" class="flash-overlay"></div>
     </div><!-- /.app-viewport -->
 
-    <script type="module" src="app.js?v=1783046402"></script>
+    <script type="module" src="app.js?v=1783047442"></script>
 </body>
 </html>
