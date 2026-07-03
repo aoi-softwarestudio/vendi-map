@@ -2777,27 +2777,14 @@ body.light-mode .mission-card.completed {
         max-width: 440px !important;
     }
     
-    /* PC用：検索バー下のソート欄（フィルターコンテナ）の横スクロールバー表示 */
+    /* PC用：検索バー下のソート欄（フィルターコンテナ）の横スクロールバーは非表示にする（ドラッグ操作のみに統一） */
     .filter-container {
-        scrollbar-width: thin !important;
-        scrollbar-color: rgba(255, 157, 108, 0.45) rgba(0, 0, 0, 0.15) !important;
+        scrollbar-width: none !important; /* Firefox用非表示 */
         overflow-x: auto !important;
-        padding-bottom: 8px !important;
-        cursor: pointer;
+        padding-bottom: 2px !important;
+        cursor: grab !important; /* 掴めることを示す手のひらアイコン */
     }
     .filter-container::-webkit-scrollbar {
-        display: block !important;
-        height: 6px !important;
-    }
-    .filter-container::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.02) !important;
-        border-radius: 3px !important;
-    }
-    .filter-container::-webkit-scrollbar-thumb {
-        background: rgba(255, 157, 108, 0.35) !important;
-        border-radius: 3px !important;
-    }
-    .filter-container::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 157, 108, 0.6) !important;
+        display: none !important; /* Webkit用非表示 */
     }
 }
