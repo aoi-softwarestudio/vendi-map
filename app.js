@@ -2410,6 +2410,76 @@ function initMap() {
 
         renderMarkers(initialSpots);
 
+        // Fallback helper when GPS is unavailable
+        const fallbackToDefaultLocation = (reason) => {
+            if (!userLocation) {
+                // Default center (Shibuya station area where many demo spots exist)
+                userLocation = {
+                    lat: 35.658034,
+                    lng: 139.70163
+                };
+                showToast(`${reason}デモ用の位置（渋谷）に仮設定します。`, 'warning');
+                updateGPSUI(userLocation.lat, userLocation.lng, 100);
+            }
+        };
+
+        // Render user accuracy circle and pulsed dot marker
+        const updateGPSUI = (lat, lng, accuracy) => {
+            // First-time location acquisition: center map on user automatically
+            if (!hasCenteredOnUser) {
+                hasCenteredOnUser = true;
+                isAutoFollow = true;
+                const locateBtn = document.getElementById('locateBtn');
+                if (locateBtn) locateBtn.classList.add('active');
+                if (map) {
+                    map.setView([lat, lng], 16);
+                }
+            }
+            
+            // Update UI GPS accuracy badge in real-time
+            const accuracyText = (accuracy === 100 && !navigator.geolocation) ? `GPS精度: デモ` : `GPS精度: ±${Math.round(accuracy)}m`;
+            const accuracySpan = document.getElementById('gpsAccuracyDisplay');
+            if (accuracySpan) {
+                accuracySpan.innerHTML = `<i class="fas fa-location-crosshairs"></i> ${accuracyText}`;
+                if (accuracy <= 15) {
+                    accuracySpan.style.color = '#00ff88'; // high accuracy (green)
+                } else if (accuracy <= 50) {
+                    accuracySpan.style.color = '#ffd700'; // medium accuracy (gold)
+                } else {
+                    accuracySpan.style.color = '#ff9d6c'; // low accuracy (orange)
+                }
+            }
+            
+            if (userMarker) {
+                userMarker.setLatLng([lat, lng]);
+            } else {
+                userMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: '',
+                        html: '<div class="user-location-marker"><div class="user-pulse-dot"></div><div class="user-pulse-ring"></div></div>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    }),
+                    interactive: false,
+                    zIndexOffset: 1000
+                }).addTo(map);
+            }
+            
+            if (accuracyCircle) {
+                accuracyCircle.setLatLng([lat, lng]);
+                accuracyCircle.setRadius(accuracy);
+            } else {
+                accuracyCircle = L.circle([lat, lng], {
+                    radius: accuracy,
+                    color: '#3b82f6',
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.12,
+                    weight: 1,
+                    interactive: false
+                }).addTo(map);
+            }
+        };
+
         // Locate user on start (with real-time watchPosition and Accuracy Circle)
         const locateUser = () => {
             if (navigator.geolocation) {
@@ -2418,61 +2488,19 @@ function initMap() {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
                     };
-                    const accuracy = position.coords.accuracy;
-                    
-                    // First-time location acquisition: center map on user automatically
-                    if (!hasCenteredOnUser) {
-                        hasCenteredOnUser = true;
-                        isAutoFollow = true;
-                        const locateBtn = document.getElementById('locateBtn');
-                        if (locateBtn) locateBtn.classList.add('active');
-                        if (map) {
-                            map.setView([userLocation.lat, userLocation.lng], 16);
-                        }
-                    }
-                    
-                    // Update UI GPS accuracy badge in real-time
-                    const accuracyText = `GPS精度: ±${Math.round(accuracy)}m`;
-                    const accuracySpan = document.getElementById('gpsAccuracyDisplay');
-                    if (accuracySpan) {
-                        accuracySpan.innerHTML = `<i class="fas fa-location-crosshairs"></i> ${accuracyText}`;
-                        if (accuracy <= 10) {
-                            accuracySpan.style.color = '#00ff88'; // high accuracy (green)
-                        } else if (accuracy <= 30) {
-                            accuracySpan.style.color = '#ffd700'; // medium accuracy (gold)
-                        } else {
-                            accuracySpan.style.color = '#ff4444'; // low accuracy (red)
-                        }
-                    }
-                    
-                    if (userMarker) {
-                        userMarker.setLatLng([userLocation.lat, userLocation.lng]);
-                    } else {
-                        userMarker = L.marker([userLocation.lat, userLocation.lng], {
-                            icon: L.divIcon({
-                                className: '',
-                                html: '<div class="user-location-marker"><div class="user-pulse-dot"></div><div class="user-pulse-ring"></div></div>',
-                                iconSize: [24, 24],
-                                iconAnchor: [12, 12]
-                            }),
-                            interactive: false,
-                            zIndexOffset: 1000
-                        }).addTo(map);
-                    }
-                    
-                    if (accuracyCircle) {
-                        accuracyCircle.setLatLng([userLocation.lat, userLocation.lng]);
-                        accuracyCircle.setRadius(accuracy);
-                    } else {
-                        accuracyCircle = L.circle([userLocation.lat, userLocation.lng], {
-                            radius: accuracy,
-                            color: '#3b82f6',
-                            fillColor: '#3b82f6',
-                            fillOpacity: 0.12,
-                            weight: 1,
-                            interactive: false
-                        }).addTo(map);
-                    }
+                    updateGPSUI(userLocation.lat, userLocation.lng, position.coords.accuracy);
+                }, (error) => {
+                    console.warn("Geolocation watch error:", error);
+                    fallbackToDefaultLocation("現在地（GPS）の取得がタイムアウトしたか、許可されていません。");
+                }, {
+                    enableHighAccuracy: false, // Avoid instant timeout failures on desktop browsers
+                    timeout: 10000,
+                    maximumAge: 10000
+                });
+            } else {
+                fallbackToDefaultLocation("ブラウザが位置情報APIに対応していません。");
+            }
+        };
                     
                     // If in registration mode, continuously refine marker and address to match high-accuracy GPS updates
                     if (tempMarker && addingSpotMode) {
@@ -2533,6 +2561,7 @@ function initMap() {
                     showToast('自動追従モードをオンにしました。', 'success');
                     if (userLocation) {
                         map.setView([userLocation.lat, userLocation.lng], 16);
+                        updateGPSUI(userLocation.lat, userLocation.lng, 15);
                     } else {
                         navigator.geolocation.getCurrentPosition((position) => {
                             userLocation = {
@@ -2540,12 +2569,24 @@ function initMap() {
                                 lng: position.coords.longitude
                             };
                             map.setView([userLocation.lat, userLocation.lng], 16);
+                            updateGPSUI(userLocation.lat, userLocation.lng, position.coords.accuracy);
+                        }, (error) => {
+                            console.warn("Locate button getCurrentPosition error:", error);
+                            fallbackToDefaultLocation("現在地の取得に失敗しました。");
+                            if (userLocation) {
+                                map.setView([userLocation.lat, userLocation.lng], 16);
+                            }
+                        }, {
+                            enableHighAccuracy: false,
+                            timeout: 8000
                         });
                     }
                 } else {
                     btn.classList.remove('active');
                     showToast('自動追従モードをオフにしました。', 'info');
                 }
+            } else {
+                fallbackToDefaultLocation("ブラウザが位置情報に対応していません。");
             }
         });
         document.getElementById('closePanelBtn').addEventListener('click', closeDetailPanel);
@@ -3303,9 +3344,34 @@ function toggleAddMode() {
             isAwaitingLocationForAdd = true;
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {
-                    const pos = [position.coords.latitude, position.coords.longitude];
-                    map.setView(pos, 16);
-                }, () => {}, { enableHighAccuracy: true, maximumAge: 1000, timeout: 7000 });
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    map.setView([userLocation.lat, userLocation.lng], 16);
+                    updateGPSUI(userLocation.lat, userLocation.lng, position.coords.accuracy);
+                    
+                    // Proceed to add spot now that we have location
+                    addingSpotMode = true;
+                    document.getElementById('addSpotBtn').classList.add('active');
+                    showAddModal(userLocation);
+                }, (error) => {
+                    console.warn("toggleAddMode location error:", error);
+                    // Safe fallback
+                    userLocation = {
+                        lat: 35.658034,
+                        lng: 139.70163
+                    };
+                    showToast('位置情報の取得に失敗しました。デモ位置（渋谷）で自販機を登録します。', 'warning');
+                    updateGPSUI(userLocation.lat, userLocation.lng, 100);
+                    map.setView([userLocation.lat, userLocation.lng], 16);
+                    
+                    addingSpotMode = true;
+                    document.getElementById('addSpotBtn').classList.add('active');
+                    showAddModal(userLocation);
+                }, { enableHighAccuracy: false, maximumAge: 5000, timeout: 8000 });
+            } else {
+                showToast('ブラウザが位置情報に対応していません。', 'error');
             }
             return;
         }
