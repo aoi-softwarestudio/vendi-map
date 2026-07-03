@@ -93,6 +93,80 @@ let newSpotPhotoBase64 = null;
 let userLocation = null;
 let userMarker = null;
 
+// Fallback helper when GPS is unavailable
+function fallbackToDefaultLocation(reason) {
+    if (!userLocation) {
+        // Default center (Shibuya station area where many demo spots exist)
+        userLocation = {
+            lat: 35.658034,
+            lng: 139.70163
+        };
+        showToast(`${reason}デモ用の位置（渋谷）に仮設定します。`, 'warning');
+        updateGPSUI(userLocation.lat, userLocation.lng, 100);
+    }
+}
+
+// Render user accuracy circle and pulsed dot marker
+function updateGPSUI(lat, lng, accuracy) {
+    // First-time location acquisition: center map on user automatically
+    if (!hasCenteredOnUser) {
+        hasCenteredOnUser = true;
+        isAutoFollow = true;
+        const locateBtn = document.getElementById('locateBtn');
+        if (locateBtn) locateBtn.classList.add('active');
+        if (map) {
+            map.setView([lat, lng], 16);
+        }
+    }
+    
+    // Update UI GPS accuracy badge in real-time
+    const accuracyText = (accuracy === 100 && !navigator.geolocation) ? `GPS精度: デモ` : `GPS精度: ±${Math.round(accuracy)}m`;
+    const accuracySpan = document.getElementById('gpsAccuracyDisplay');
+    if (accuracySpan) {
+        accuracySpan.innerHTML = `<i class="fas fa-location-crosshairs"></i> ${accuracyText}`;
+        if (accuracy <= 15) {
+            accuracySpan.style.color = '#00ff88'; // high accuracy (green)
+        } else if (accuracy <= 50) {
+            accuracySpan.style.color = '#ffd700'; // medium accuracy (gold)
+        } else {
+            accuracySpan.style.color = '#ff9d6c'; // low accuracy (orange)
+        }
+    }
+    
+    if (userMarker) {
+        userMarker.setLatLng([lat, lng]);
+    } else {
+        if (map) {
+            userMarker = L.marker([lat, lng], {
+                icon: L.divIcon({
+                    className: '',
+                    html: '<div class="user-location-marker"><div class="user-pulse-dot"></div><div class="user-pulse-ring"></div></div>',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                }),
+                interactive: false,
+                zIndexOffset: 1000
+            }).addTo(map);
+        }
+    }
+    
+    if (accuracyCircle) {
+        accuracyCircle.setLatLng([lat, lng]);
+        accuracyCircle.setRadius(accuracy);
+    } else {
+        if (map) {
+            accuracyCircle = L.circle([lat, lng], {
+                radius: accuracy,
+                color: '#3b82f6',
+                fillColor: '#3b82f6',
+                fillOpacity: 0.12,
+                weight: 1,
+                interactive: false
+            }).addTo(map);
+        }
+    }
+}
+
 // Search Helpers for Fuzzy & Normalization Matching
 function toKatakana(str) {
     return str.replace(/[\u3041-\u3096]/g, function(match) {
@@ -2409,76 +2483,6 @@ function initMap() {
         }
 
         renderMarkers(initialSpots);
-
-        // Fallback helper when GPS is unavailable
-        const fallbackToDefaultLocation = (reason) => {
-            if (!userLocation) {
-                // Default center (Shibuya station area where many demo spots exist)
-                userLocation = {
-                    lat: 35.658034,
-                    lng: 139.70163
-                };
-                showToast(`${reason}デモ用の位置（渋谷）に仮設定します。`, 'warning');
-                updateGPSUI(userLocation.lat, userLocation.lng, 100);
-            }
-        };
-
-        // Render user accuracy circle and pulsed dot marker
-        const updateGPSUI = (lat, lng, accuracy) => {
-            // First-time location acquisition: center map on user automatically
-            if (!hasCenteredOnUser) {
-                hasCenteredOnUser = true;
-                isAutoFollow = true;
-                const locateBtn = document.getElementById('locateBtn');
-                if (locateBtn) locateBtn.classList.add('active');
-                if (map) {
-                    map.setView([lat, lng], 16);
-                }
-            }
-            
-            // Update UI GPS accuracy badge in real-time
-            const accuracyText = (accuracy === 100 && !navigator.geolocation) ? `GPS精度: デモ` : `GPS精度: ±${Math.round(accuracy)}m`;
-            const accuracySpan = document.getElementById('gpsAccuracyDisplay');
-            if (accuracySpan) {
-                accuracySpan.innerHTML = `<i class="fas fa-location-crosshairs"></i> ${accuracyText}`;
-                if (accuracy <= 15) {
-                    accuracySpan.style.color = '#00ff88'; // high accuracy (green)
-                } else if (accuracy <= 50) {
-                    accuracySpan.style.color = '#ffd700'; // medium accuracy (gold)
-                } else {
-                    accuracySpan.style.color = '#ff9d6c'; // low accuracy (orange)
-                }
-            }
-            
-            if (userMarker) {
-                userMarker.setLatLng([lat, lng]);
-            } else {
-                userMarker = L.marker([lat, lng], {
-                    icon: L.divIcon({
-                        className: '',
-                        html: '<div class="user-location-marker"><div class="user-pulse-dot"></div><div class="user-pulse-ring"></div></div>',
-                        iconSize: [24, 24],
-                        iconAnchor: [12, 12]
-                    }),
-                    interactive: false,
-                    zIndexOffset: 1000
-                }).addTo(map);
-            }
-            
-            if (accuracyCircle) {
-                accuracyCircle.setLatLng([lat, lng]);
-                accuracyCircle.setRadius(accuracy);
-            } else {
-                accuracyCircle = L.circle([lat, lng], {
-                    radius: accuracy,
-                    color: '#3b82f6',
-                    fillColor: '#3b82f6',
-                    fillOpacity: 0.12,
-                    weight: 1,
-                    interactive: false
-                }).addTo(map);
-            }
-        };
 
         // Locate user on start (with real-time watchPosition and Accuracy Circle)
         const locateUser = () => {
