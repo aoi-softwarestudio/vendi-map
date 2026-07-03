@@ -2776,4 +2776,28 @@ body.light-mode .mission-card.completed {
         bottom: 30px !important;
         max-width: 440px !important;
     }
+    
+    /* PC用：検索バー下のソート欄（フィルターコンテナ）の横スクロールバー表示 */
+    .filter-container {
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(255, 157, 108, 0.45) rgba(0, 0, 0, 0.15) !important;
+        overflow-x: auto !important;
+        padding-bottom: 8px !important;
+        cursor: pointer;
+    }
+    .filter-container::-webkit-scrollbar {
+        display: block !important;
+        height: 6px !important;
+    }
+    .filter-container::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.02) !important;
+        border-radius: 3px !important;
+    }
+    .filter-container::-webkit-scrollbar-thumb {
+        background: rgba(255, 157, 108, 0.35) !important;
+        border-radius: 3px !important;
+    }
+    .filter-container::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 157, 108, 0.6) !important;
+    }
 }
