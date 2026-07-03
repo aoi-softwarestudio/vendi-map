@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vendimap-cache-v71';
+const CACHE_NAME = 'vendimap-cache-v72';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
