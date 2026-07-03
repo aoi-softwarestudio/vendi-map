@@ -2689,3 +2689,62 @@ body.light-mode .mission-card.completed {
     border-top: 1px solid var(--border-color);
     transform: rotate(45deg);
 }
+
+/* ====================================================
+   Desktop Responsive Viewport & Mockup Frame (PC版最適化)
+   ==================================================== */
+@media (min-width: 500px) {
+    body {
+        background: radial-gradient(circle at center, #191624 0%, #08060c 100%) !important;
+    }
+    
+    /* PC用のバックドロップ（テキスト案内） */
+    body::before {
+        content: "VendiMap Desktop Client";
+        position: absolute;
+        top: 6%;
+        left: 6%;
+        color: rgba(255, 255, 255, 0.04);
+        font-size: 2.2rem;
+        font-weight: 900;
+        font-family: 'Outfit', sans-serif;
+        letter-spacing: 2px;
+        pointer-events: none;
+    }
+    
+    body::after {
+        content: "スマートフォン用に最適化された画面を表示しています。ホーム画面に追加（PWA）して遊ぶのがお勧めです。";
+        position: absolute;
+        bottom: 5%;
+        color: rgba(255, 255, 255, 0.25);
+        font-size: 0.8rem;
+        font-weight: 500;
+        pointer-events: none;
+        text-align: center;
+        width: 100%;
+        max-width: 600px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .app-viewport {
+        height: 90vh !important;
+        max-height: 850px !important;
+        border-radius: 32px !important;
+        border: 6px solid #28243d !important; /* Premium dark plum bezel */
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+    }
+    
+    /* Adjust fixed banner/container positions for desktop mockup */
+    .toast-container {
+        bottom: 30px !important;
+        right: 30px !important;
+        max-width: 370px !important;
+    }
+    
+    #pwaInstallBanner, #pwaIosGuide {
+        bottom: 30px !important;
+        left: 15px !important;
+        right: 15px !important;
+        max-width: 400px !important;
+    }
+}
