@@ -5649,9 +5649,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         setTimeout(() => {
-            iosGuide.style.display = 'none';
+            if (iosGuide) iosGuide.style.display = 'none';
         }, 25000);
     }
+    
+    // Enable horizontal drag scrolling for filter tags on PC
+    const initFilterDragScroll = () => {
+        const slider = document.getElementById('filterContainer');
+        if (!slider) return;
+        
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+        
+        slider.addEventListener('mousedown', (e) => {
+            isDown = true;
+            slider.style.cursor = 'grabbing';
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+            e.preventDefault();
+        });
+        
+        slider.addEventListener('mouseleave', () => {
+            isDown = false;
+            slider.style.cursor = 'pointer';
+        });
+        
+        slider.addEventListener('mouseup', () => {
+            isDown = false;
+            slider.style.cursor = 'pointer';
+        });
+        
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 1.5; // Scroll speed sensitivity
+            slider.scrollLeft = scrollLeft - walk;
+        });
+    };
+    initFilterDragScroll();
 });
 
 export { initialSpots, CustomScrollbarEngine };
