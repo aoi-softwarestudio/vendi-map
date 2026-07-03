@@ -2170,22 +2170,63 @@ body.light-mode .achievement-item.locked .achievement-icon {
 }
 
 .btn-capture-cam {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, #00d4ff 0%, #ff007a 100%);
+    width: 90px;
+    height: 90px;
+    background: linear-gradient(135deg, #00f0ff 0%, #ff007b 100%);
     color: white;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 800;
     border-radius: 50%;
+    position: relative;
+    display: flex;
     flex-direction: column;
-    gap: 4px;
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-    border: 3px solid #fff;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.6), inset 0 0 10px rgba(255, 255, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+}
+
+.btn-capture-cam .inner-circle {
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    background: rgba(10, 10, 15, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.btn-capture-cam .scan-btn-text {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    text-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
+    font-family: 'Outfit', 'Inter', sans-serif;
+    letter-spacing: 0.5px;
+}
+
+.btn-capture-cam .scan-btn-text i {
+    font-size: 1.2rem;
+    background: linear-gradient(135deg, #00f0ff, #ff007b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 2px rgba(0, 240, 255, 0.3));
 }
 
 .btn-capture-cam:hover {
-    box-shadow: 0 0 30px rgba(0, 212, 255, 0.8), 0 0 30px rgba(255, 0, 122, 0.5);
-    transform: scale(1.05);
+    transform: scale(1.08);
+    box-shadow: 0 0 35px rgba(0, 240, 255, 0.8), 0 0 35px rgba(255, 0, 123, 0.6);
+    border-color: #ffffff;
+}
+
+.btn-capture-cam:hover .inner-circle {
+    background: rgba(15, 15, 25, 0.7);
+    transform: scale(0.95);
 }
 
 /* --- AI Scan Visual Preview & Glow effects --- */
