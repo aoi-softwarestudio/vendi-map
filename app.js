@@ -2493,18 +2493,6 @@ function initMap() {
                         lng: position.coords.longitude
                     };
                     updateGPSUI(userLocation.lat, userLocation.lng, position.coords.accuracy);
-                }, (error) => {
-                    console.warn("Geolocation watch error:", error);
-                    fallbackToDefaultLocation("現在地（GPS）の取得がタイムアウトしたか、許可されていません。");
-                }, {
-                    enableHighAccuracy: false, // Avoid instant timeout failures on desktop browsers
-                    timeout: 10000,
-                    maximumAge: 10000
-                });
-            } else {
-                fallbackToDefaultLocation("ブラウザが位置情報APIに対応していません。");
-            }
-        };
                     
                     // If in registration mode, continuously refine marker and address to match high-accuracy GPS updates
                     if (tempMarker && addingSpotMode) {
@@ -2522,13 +2510,16 @@ function initMap() {
                         document.getElementById('addSpotBtn').classList.add('active');
                         showAddModal(userLocation);
                     }
-                }, () => {
-                    showToast('現在地の取得に失敗しました。位置情報の利用許可を確認してください。', 'warning');
+                }, (error) => {
+                    console.warn("Geolocation watch error:", error);
+                    fallbackToDefaultLocation("現在地（GPS）の取得がタイムアウトしたか、許可されていません。");
                 }, {
-                    enableHighAccuracy: true,
-                    maximumAge: 1000,
-                    timeout: 7000
+                    enableHighAccuracy: false, // Avoid instant timeout failures on desktop browsers
+                    timeout: 10000,
+                    maximumAge: 10000
                 });
+            } else {
+                fallbackToDefaultLocation("ブラウザが位置情報APIに対応していません。");
             }
         };
         locateUser();
