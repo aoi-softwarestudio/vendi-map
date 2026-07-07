@@ -92,6 +92,7 @@ let hasCenteredOnUser = false;
 let newSpotPhotoBase64 = null;
 let userLocation = null;
 let userMarker = null;
+let lastCenteredLocation = null;
 
 // Fallback helper when GPS is unavailable
 function fallbackToDefaultLocation(reason) {
@@ -2404,16 +2405,15 @@ function initMap() {
         });
 
         // Map moveend & zoomend — re-render markers for current viewport
-        // Map moveend & zoomend — re-render markers for current viewport
         let mapChangeTimeout = null;
         const onMapChange = () => {
-            renderMarkers(initialSpots);
-            
             if (mapChangeTimeout) {
                 clearTimeout(mapChangeTimeout);
             }
             
             mapChangeTimeout = setTimeout(() => {
+                renderMarkers(initialSpots);
+                
                 if (typeof fetchAndMergeGlobalSpots === 'function') {
                     const bounds = map.getBounds();
                     const bbox = {
@@ -2430,7 +2430,7 @@ function initMap() {
                     const center = map.getCenter();
                     fetchOSMVendingMachines(center.lat, center.lng);
                 }
-            }, 500);
+            }, 350); // Reduced delay slightly for snappier renders after stopping drag
         };
         map.on('moveend', onMapChange);
         map.on('zoomend', onMapChange);
@@ -2509,7 +2509,17 @@ function initMap() {
                     }
                     
                     if (isAutoFollow) {
-                        map.setView([userLocation.lat, userLocation.lng], map.getZoom());
+                        let shouldRecenter = true;
+                        if (lastCenteredLocation && typeof haversineDistance === 'function') {
+                            const dist = haversineDistance(lastCenteredLocation.lat, lastCenteredLocation.lng, userLocation.lat, userLocation.lng);
+                            if (dist < 3) { // Skip map panning if user moved less than 3 meters (saves battery & viewport rendering cost)
+                                shouldRecenter = false;
+                            }
+                        }
+                        if (shouldRecenter) {
+                            lastCenteredLocation = { lat: userLocation.lat, lng: userLocation.lng };
+                            map.setView([userLocation.lat, userLocation.lng], map.getZoom());
+                        }
                     }
                     
                     if (isAwaitingLocationForAdd) {
@@ -5763,8 +5773,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let isGpsSimulating = false;
     
     const initDebugHUD = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isDebugMode = urlParams.get('debug') === 'true' || urlParams.get('debug') === '1';
+        
         const trigger = document.getElementById('vendi-debug-trigger');
         const panel = document.getElementById('vendi-debug-panel');
+        
+        if (!trigger || !panel) return;
+        
+        // Hide trigger by default unless in debug mode via URL query param (?debug=true)
+        if (!isDebugMode) {
+            trigger.style.setProperty('display', 'none', 'important');
+            return;
+        } else {
+            trigger.style.setProperty('display', 'flex', 'important');
+        }
+        
         const closeBtn = document.getElementById('vendi-debug-close');
         const gpsSimBtn = document.getElementById('debug-gps-sim-toggle');
         const aiSimBtn = document.getElementById('debug-ai-sim');
