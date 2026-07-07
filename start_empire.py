@@ -347,11 +347,10 @@ if __name__ == "__main__":
         load_gemini_key()
         kill_conflicting_processes()
         start_servers()
+        start_tunnels()
 
-        # Force high-performance local mode directly to avoid network timeouts and Cloudflare 1033 errors
-        is_local_mode = True
-        for port in PORTS.keys():
-            tunnel_urls[port] = f"http://localhost:{port}"
+        # Poll Cloudflare Tunnel for public HTTPS URLs
+        poll_for_urls()
 
         update_routing()
         print_dashboard()
