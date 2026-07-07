@@ -2843,7 +2843,7 @@ body.light-mode .mission-card.completed {
     background: rgba(15, 15, 25, 0.85);
     border: 1px solid rgba(0, 240, 255, 0.4);
     color: #00f0ff;
-    display: flex;
+    display: none !important; /* Hidden by default for general users */
     align-items: center;
     justify-content: center;
     cursor: pointer;
