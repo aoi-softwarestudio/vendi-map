@@ -1,6 +1,6 @@
 import { initialSpots } from './data.js?v=20260529-rarity0';
 
-let backendApiUrl = 'http://localhost:8000';
+let backendApiUrl = 'https://cab-contributors-touch-advertisers.trycloudflare.com';
 
 async function loadDynamicConfig() {
     try {
