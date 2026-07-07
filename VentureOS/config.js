@@ -1,4 +1,4 @@
 const VENTURE_LINKS = {
-    vendimap: "http://localhost:8003/index.html",
-    socialintent: "http://localhost:8005/index.html"
+    vendimap: "https://oasis-jewelry-beijing-saving.trycloudflare.com",
+    socialintent: "https://crossing-masters-bufing-las.trycloudflare.com"
 };
