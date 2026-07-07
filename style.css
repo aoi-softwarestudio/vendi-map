@@ -2829,3 +2829,193 @@ body.light-mode .mission-card.completed {
         display: none !important; /* Webkit用非表示 */
     }
 }
+
+/* ==========================================================================
+   VendiDebug HUD Styles (Glassmorphism & Cyberpunk Neon)
+   ========================================================================== */
+#vendi-debug-trigger {
+    position: fixed;
+    bottom: 95px;
+    right: 25px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(15, 15, 25, 0.85);
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    color: #00f0ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 140000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 240, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#vendi-debug-trigger:hover {
+    background: rgba(0, 240, 255, 0.15);
+    border-color: #00f0ff;
+    box-shadow: 0 4px 20px rgba(0, 240, 255, 0.4);
+    transform: scale(1.08) rotate(30deg);
+}
+
+#vendi-debug-panel {
+    position: fixed;
+    bottom: 155px;
+    right: 25px;
+    width: 320px;
+    max-height: 480px;
+    background: rgba(10, 10, 18, 0.9);
+    border: 1.5px solid rgba(0, 240, 255, 0.3);
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 240, 255, 0.1);
+    z-index: 140000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Outfit', 'Inter', monospace, sans-serif;
+    backdrop-filter: blur(12px);
+    transition: all 0.3s ease;
+}
+
+.debug-hud-header {
+    background: rgba(25, 25, 35, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.debug-hud-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #00f0ff;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.debug-hud-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+}
+
+.debug-hud-close:hover {
+    color: #ff007b;
+}
+
+.debug-hud-content {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 0.75rem;
+    color: #e2e8f0;
+}
+
+.debug-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.debug-section-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.debug-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.debug-label {
+    color: var(--text-secondary);
+}
+
+.debug-value {
+    color: #00ff88;
+    word-break: break-all;
+}
+
+.debug-btn {
+    background: rgba(0, 240, 255, 0.1);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    border-radius: 6px;
+    color: #00f0ff;
+    padding: 6px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.debug-btn:hover {
+    background: rgba(0, 240, 255, 0.2);
+    border-color: #00f0ff;
+}
+
+.debug-btn.active {
+    background: rgba(0, 255, 136, 0.15);
+    border-color: #00ff88;
+    color: #00ff88;
+}
+
+.debug-logs-container {
+    background: rgba(5, 5, 10, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    height: 120px;
+    overflow-y: auto;
+    padding: 6px;
+    font-family: monospace;
+    font-size: 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.debug-log-line {
+    line-height: 1.2;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    padding-bottom: 2px;
+}
+
+.debug-log-line.log { color: #cbd5e1; }
+.debug-log-line.warn { color: #ffd700; }
+.debug-log-line.error { color: #ff5555; }
+
+/* Desktop adjustment for Debug HUD */
+@media (min-width: 769px) {
+    #vendi-debug-trigger {
+        bottom: 25px;
+        right: 25px;
+    }
+    #vendi-debug-panel {
+        bottom: 85px;
+        right: 25px;
+    }
+}
+
