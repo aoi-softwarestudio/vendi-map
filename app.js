@@ -133,6 +133,14 @@ function updateGPSUI(lat, lng, accuracy) {
         }
     }
     
+    // Update Debug HUD fields if they exist
+    const dbgLat = document.getElementById('debug-lat');
+    const dbgLng = document.getElementById('debug-lng');
+    const dbgAcc = document.getElementById('debug-acc');
+    if (dbgLat) dbgLat.textContent = lat.toFixed(6);
+    if (dbgLng) dbgLng.textContent = lng.toFixed(6);
+    if (dbgAcc) dbgAcc.textContent = `±${Math.round(accuracy)}m`;
+    
     if (userMarker) {
         userMarker.setLatLng([lat, lng]);
     } else {
@@ -5750,6 +5758,162 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     initFilterDragScroll();
+
+    // VendiDebug HUD Engine
+    let isGpsSimulating = false;
+    
+    const initDebugHUD = () => {
+        const trigger = document.getElementById('vendi-debug-trigger');
+        const panel = document.getElementById('vendi-debug-panel');
+        const closeBtn = document.getElementById('vendi-debug-close');
+        const gpsSimBtn = document.getElementById('debug-gps-sim-toggle');
+        const aiSimBtn = document.getElementById('debug-ai-sim');
+        const logsArea = document.getElementById('debug-logs-area');
+        
+        if (!trigger || !panel) return;
+        
+        // 1. Toggle Panel Visibility
+        trigger.addEventListener('click', () => {
+            const isVisible = panel.style.display === 'flex';
+            panel.style.display = isVisible ? 'none' : 'flex';
+        });
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                panel.style.display = 'none';
+            });
+        }
+        
+        // 2. Intercept Console Logs for On-Screen Debugging
+        const maxLogLines = 25;
+        const appendDebugLog = (msg, type = 'log') => {
+            if (!logsArea) return;
+            const logLine = document.createElement('div');
+            logLine.className = `debug-log-line ${type}`;
+            logLine.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logsArea.appendChild(logLine);
+            
+            // Limit lines
+            while (logsArea.children.length > maxLogLines) {
+                logsArea.removeChild(logsArea.firstChild);
+            }
+            // Auto scroll to bottom
+            logsArea.scrollTop = logsArea.scrollHeight;
+        };
+        
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        console.log = (...args) => {
+            originalLog.apply(console, args);
+            appendDebugLog(args.join(' '), 'log');
+        };
+        console.warn = (...args) => {
+            originalWarn.apply(console, args);
+            appendDebugLog(args.join(' '), 'warn');
+        };
+        console.error = (...args) => {
+            originalError.apply(console, args);
+            appendDebugLog(args.join(' '), 'error');
+        };
+        
+        // 3. GPS Simulation Mode
+        if (gpsSimBtn) {
+            gpsSimBtn.addEventListener('click', () => {
+                isGpsSimulating = !isGpsSimulating;
+                if (isGpsSimulating) {
+                    gpsSimBtn.classList.add('active');
+                    gpsSimBtn.innerHTML = '<i class="fas fa-check-circle"></i> GPSシミュ中';
+                    showToast("GPSシミュレーション開始。地図をクリックして現在地を変更できます。", "success");
+                    console.log("GPS Simulation Mode activated. Click map to set position.");
+                } else {
+                    gpsSimBtn.classList.remove('active');
+                    gpsSimBtn.innerHTML = '<i class="fas fa-map-pin"></i> GPSシミュ';
+                    showToast("GPSシミュレーション停止。", "info");
+                    console.log("GPS Simulation Mode deactivated.");
+                }
+            });
+        }
+        
+        // 4. Map click hook for GPS Simulation
+        if (map) {
+            map.on('click', (e) => {
+                if (isGpsSimulating) {
+                    const latLng = e.latlng;
+                    userLocation = {
+                        lat: latLng.lat,
+                        lng: latLng.lng
+                    };
+                    updateGPSUI(latLng.lat, latLng.lng, 5);
+                    console.log(`GPS emulated to: ${latLng.lat.toFixed(6)}, ${latLng.lng.toFixed(6)}`);
+                }
+            });
+        }
+        
+        // 5. AI Dummy Scanner execution (for testing scanner workflows on PC)
+        if (aiSimBtn) {
+            aiSimBtn.addEventListener('click', async () => {
+                panel.style.display = 'none'; // Close panel to show overlay
+                const scanOverlay = document.getElementById('aiScanOverlay');
+                const scanStatus = document.getElementById('aiScanStatus');
+                
+                if (!scanOverlay || !scanStatus) {
+                    showToast("AIスキャン画面（オーバーレイ）が見つかりません。", "error");
+                    return;
+                }
+                
+                console.log("Initializing AI Dummy Scan sequence...");
+                scanOverlay.style.display = 'flex';
+                scanStatus.innerHTML = '<i class="fas fa-robot"></i> Gemini Vision でドリンクの配列を特定中...';
+                
+                // Simulate delay 1
+                await new Promise(r => setTimeout(r, 1200));
+                scanStatus.innerHTML = '<i class="fas fa-sync fa-spin"></i> ラインナップを抽出中: ジョージア, 紅茶花伝, い・ろ・は・す...';
+                
+                // Simulate delay 2
+                await new Promise(r => setTimeout(r, 1500));
+                scanOverlay.style.display = 'none';
+                
+                // Fake successful photo preview if applicable
+                const previewImg = document.getElementById('newSpotPhotoPreviewImg');
+                const previewBox = document.getElementById('newSpotPhotoPreviewBox');
+                if (previewImg && previewBox) {
+                    // Use one of the real bundled demo images
+                    previewImg.src = 'media__1781913844368.jpg';
+                    previewBox.style.display = 'block';
+                    const badge = document.getElementById('newSpotPhotoPreviewBadge');
+                    if (badge) {
+                        badge.textContent = "AI解析成功";
+                        badge.className = "scan-status-badge success";
+                    }
+                }
+                
+                // If a spot is currently selected, trigger the naming rights / purchase panel update!
+                if (selectedSpot) {
+                    selectedSpot.verifiedCount = (selectedSpot.verifiedCount || 0) + 1;
+                    showToast("AIスキャン完了！ドリンク情報が更新されました。", "success");
+                    console.log(`Successfully simulated scan for spot: ${selectedSpot.name || selectedSpot.osmId}`);
+                    // Refresh view
+                    openDetailPanel(selectedSpot);
+                    VendiMissions.progress('scan', 1);
+                } else {
+                    // If no spot selected, trigger addition mode at Shibuya with dummy location
+                    showToast("スキャン成功！自販機新規登録フォームにデータを入力します。", "success");
+                    userLocation = userLocation || { lat: 35.658034, lng: 139.70163 };
+                    addingSpotMode = true;
+                    const addBtn = document.getElementById('addSpotBtn');
+                    if (addBtn) addBtn.classList.add('active');
+                    showAddModal(userLocation);
+                    
+                    // Pre-fill fields for ease of testing
+                    const newSpotName = document.getElementById('newSpotName');
+                    if (newSpotName) newSpotName.value = "AI検出: コカ・コーラ自販機 (渋谷デモ)";
+                }
+            });
+        }
+    };
+    initDebugHUD();
 });
 
 export { initialSpots, CustomScrollbarEngine };
