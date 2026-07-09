@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReporTweak - AI Report Style Transformer</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>ReporTweak</h1>
+                    <span>AI Report Style Transformer</span>
+                </div>
+            </div>
+            
+            <div class="header-actions">
+                <div id="api-status-badge" class="status-badge mock-mode">
+                    <span class="indicator"></span>
+                    <span class="status-text">オフライン・モックモード</span>
+                </div>
+                <button id="btn-settings" class="icon-button" title="API設定">
+                    <i data-lucide="settings"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <div class="main-layout">
+            <!-- SIDEBAR: HISTORY -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2><i data-lucide="history"></i> 変換履歴</h2>
+                    <button id="btn-clear-history" class="text-button" title="履歴をすべて削除">すべてクリア</button>
+                </div>
+                <div id="history-list" class="history-list">
+                    <!-- 履歴アイテムがJavaScriptで挿入されます -->
+                    <div class="empty-state">
+                        <i data-lucide="folder-open"></i>
+                        <p>履歴はありません</p>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CONTENT AREA -->
+            <main class="content-area">
+                <!-- PARAMETER CONTROL PANEL -->
+                <section class="control-panel glass">
+                    <div class="panel-row">
+                        <!-- 知能レベル -->
+                        <div class="control-group slider-group flex-2">
+                            <div class="control-label-row">
+                                <label for="range-intelligence">
+                                    <i data-lucide="brain"></i> 知能レベル (Intelligence Level)
+                                </label>
+                                <span id="val-intelligence" class="value-badge">60 (大学生)</span>
+                            </div>
+                            <input type="range" id="range-intelligence" min="10" max="100" value="60" step="5" class="custom-slider">
+                            <div class="slider-ticks">
+                                <span data-value="10">高校生</span>
+                                <span data-value="40">大学生</span>
+                                <span data-value="75">大学院生</span>
+                                <span data-value="95">研究者・教授</span>
+                            </div>
+                        </div>
+
+                        <!-- 厳格さ -->
+                        <div class="control-group slider-group flex-1">
+                            <div class="control-label-row">
+                                <label for="range-formalness">
+                                    <i data-lucide="scale"></i> 文章の厳格さ (Formalness)
+                                </label>
+                                <span id="val-formalness" class="value-badge">70%</span>
+                            </div>
+                            <input type="range" id="range-formalness" min="0" max="100" value="70" step="5" class="custom-slider">
+                            <div class="slider-ticks">
+                                <span>カジュアル</span>
+                                <span>標準</span>
+                                <span>非常に厳格</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-row border-top">
+                        <!-- 詳細トーン -->
+                        <div class="control-group">
+                            <label for="select-tone"><i data-lucide="message-square"></i> トーンの方向性</label>
+                            <select id="select-tone" class="custom-select">
+                                <option value="standard">標準（内容重視）</option>
+                                <option value="academic">学術的・論文調</option>
+                                <option value="business">ビジネス・論理的</option>
+                                <option value="easy">平易（小学生・中学生向け）</option>
+                                <option value="creative">表現豊か（エッセイ風）</option>
+                            </select>
+                        </div>
+
+                        <!-- 文末統一 -->
+                        <div class="control-group">
+                            <label for="select-ending"><i data-lucide="type"></i> 文末の統一</label>
+                            <select id="select-ending" class="custom-select">
+                                <option value="keep">変換前を踏襲する</option>
+                                <option value="da">「だ・である」に統一</option>
+                                <option value="desu">「です・ます」に統一</option>
+                            </select>
+                        </div>
+
+                        <!-- リライト実行ボタン -->
+                        <div class="action-group">
+                            <button id="btn-transform" class="primary-button">
+                                <i data-lucide="zap"></i> スタイル変換を実行
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- EDITOR DUAL WORKSPACE -->
+                <section class="editor-workspace">
+                    <!-- SOURCE TEXT (LEFT) -->
+                    <div class="editor-card glass">
+                        <div class="card-header">
+                            <h3><i data-lucide="file-text"></i> 変換前の文章 (入力)</h3>
+                            <div class="card-actions">
+                                <button id="btn-sample-1" class="secondary-button size-sm">サンプル1 (難解)</button>
+                                <button id="btn-sample-2" class="secondary-button size-sm">サンプル2 (簡易)</button>
+                                <button id="btn-clear-source" class="icon-button-sm" title="テキストをクリア">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <textarea id="text-source" placeholder="ここに変換したいレポートや論文、文章を入力してください..."></textarea>
+                        </div>
+                        <div class="card-footer">
+                            <span id="source-word-count">文字数: 0</span>
+                        </div>
+                    </div>
+
+                    <!-- TARGET TEXT (RIGHT) -->
+                    <div class="editor-card glass">
+                        <div class="card-header">
+                            <div class="tab-selectors">
+                                <button id="tab-output" class="tab-btn active" data-tab="output">
+                                    <i data-lucide="file-check-2"></i> 変換後の文章
+                                </button>
+                                <button id="tab-diff" class="tab-btn" data-tab="diff">
+                                    <i data-lucide="git-diff"></i> 変更箇所の比較
+                                </button>
+                            </div>
+                            <div class="card-actions">
+                                <button id="btn-copy" class="secondary-button size-sm" title="クリップボードにコピー">
+                                    <i data-lucide="copy"></i> コピー
+                                </button>
+                                <button id="btn-download" class="secondary-button size-sm" title="テキストファイルとして保存">
+                                    <i data-lucide="download"></i> 保存
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- 通常出力 -->
+                            <div id="output-text-container" class="output-container">
+                                <textarea id="text-target" readonly placeholder="変換結果がここに表示されます..."></textarea>
+                            </div>
+                            <!-- Diff出力 -->
+                            <div id="output-diff-container" class="output-container hidden">
+                                <div id="diff-viewer" class="diff-viewer">
+                                    <p class="diff-placeholder">文章を入力して「スタイル変換を実行」すると、変更された箇所が色分けされて表示されます。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <span id="target-word-count">文字数: 0</span>
+                            <span id="process-time-badge" class="time-badge hidden">変換時間: 0.8s</span>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- SETTINGS MODAL -->
+        <div id="modal-settings" class="modal-overlay hidden">
+            <div class="modal-content glass">
+                <div class="modal-header">
+                    <h2><i data-lucide="settings"></i> システム設定 & API連携</h2>
+                    <button id="btn-close-modal" class="icon-button"><i data-lucide="x"></i></button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-desc">
+                        デフォルトではローカルの簡易AIエンジン（モック）で動作します。実際に高度なAIリライトを行うには、Gemini APIキーを設定してください。
+                    </p>
+                    
+                    <div class="settings-form-group">
+                        <label for="input-api-key">Gemini API キー</label>
+                        <div class="input-password-wrapper">
+                            <input type="password" id="input-api-key" placeholder="AIZAaSy..." autocomplete="off">
+                            <button id="btn-toggle-api-key-vis" class="icon-button-sm" type="button">
+                                <i data-lucide="eye"></i>
+                            </button>
+                        </div>
+                        <span class="help-text">
+                            キーは暗号化され、ブラウザの安全なローカルストレージ（localStorage）にのみ保存されます。サーバーへは直接送信されません。
+                        </span>
+                    </div>
+
+                    <div class="settings-form-group">
+                        <label for="select-model">使用するAIモデル</label>
+                        <select id="select-model" class="custom-select">
+                            <option value="gemini-2.5-flash">Gemini 2.5 Flash (推奨: 高速・高精度)</option>
+                            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                            <option value="gemini-1.5-pro">Gemini 1.5 Pro (高品質・やや低速)</option>
+                        </select>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button id="btn-test-api" class="secondary-button"><i data-lucide="check-circle-2"></i> 接続テスト</button>
+                        <button id="btn-save-settings" class="primary-button"><i data-lucide="save"></i> 設定を保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOAST NOTIFICATION -->
+        <div id="toast" class="toast hidden">
+            <i class="toast-icon" data-lucide="info"></i>
+            <span class="toast-message">メッセージ</span>
+        </div>
+    </div>
+
+    <!-- APP SCRIPT -->
+    <script src="app.js"></script>
+    <script>
+        // Lucideアイコンの初期化
+        lucide.createIcons();
+    </script>
+</body>
+</html>
