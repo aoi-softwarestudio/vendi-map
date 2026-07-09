@@ -1,6 +1,6 @@
 import { initialSpots } from './data.js?v=20260529-rarity0';
 
-let backendApiUrl = 'https://cab-contributors-touch-advertisers.trycloudflare.com';
+let backendApiUrl = 'https://vendimap-backend-aoi.onrender.com';
 
 async function loadDynamicConfig() {
     try {
@@ -93,6 +93,8 @@ let newSpotPhotoBase64 = null;
 let userLocation = null;
 let userMarker = null;
 let lastCenteredLocation = null;
+let lastAccuracyWarningTime = 0;
+let addSpotTempMarker = null;
 
 // Fallback helper when GPS is unavailable
 function fallbackToDefaultLocation(reason) {
@@ -109,6 +111,15 @@ function fallbackToDefaultLocation(reason) {
 
 // Render user accuracy circle and pulsed dot marker
 function updateGPSUI(lat, lng, accuracy) {
+    // Warning for low GPS accuracy (throttled to once every 25 seconds)
+    if (accuracy > 20 && accuracy < 1000) {
+        const now = Date.now();
+        if (now - lastAccuracyWarningTime > 25000) {
+            lastAccuracyWarningTime = now;
+            showToast(`⚠️ GPSの精度が低下しています（誤差約±${Math.round(accuracy)}m）。自販機追加の際は黄色いピンをドラッグして正しい位置に調整してください。`, 'warning');
+        }
+    }
+
     // First-time location acquisition: center map on user automatically
     if (!hasCenteredOnUser) {
         hasCenteredOnUser = true;
@@ -2524,15 +2535,13 @@ function initMap() {
                     
                     if (isAwaitingLocationForAdd) {
                         isAwaitingLocationForAdd = false;
-                        addingSpotMode = true;
-                        document.getElementById('addSpotBtn').classList.add('active');
-                        showAddModal(userLocation);
+                        startMapPinDraggingMode(userLocation);
                     }
                 }, (error) => {
                     console.warn("Geolocation watch error:", error);
                     fallbackToDefaultLocation("現在地（GPS）の取得がタイムアウトしたか、許可されていません。");
                 }, {
-                    enableHighAccuracy: false, // Avoid instant timeout failures on desktop browsers
+                    enableHighAccuracy: true, // Request high accuracy to resolve user position precisely
                     timeout: 10000,
                     maximumAge: 10000
                 });
@@ -2554,6 +2563,13 @@ function initMap() {
         document.getElementById('filterContainer').addEventListener('click', handleFilter);
         document.getElementById('addSpotBtn').addEventListener('click', toggleAddMode);
         document.getElementById('saveSpotBtn').addEventListener('click', saveNewSpot);
+        document.getElementById('confirmLocationBtn').addEventListener('click', () => {
+            if (addSpotTempMarker) {
+                const confirmedLatLng = addSpotTempMarker.getLatLng();
+                cancelMapPinDraggingMode();
+                showAddModal(confirmedLatLng);
+            }
+        });
         document.getElementById('cancelAddBtn').addEventListener('click', () => {
             document.getElementById('addSpotModal').style.display = 'none';
             addingSpotMode = false;
@@ -2561,6 +2577,14 @@ function initMap() {
             if (tempMarker) {
                 map.removeLayer(tempMarker);
                 tempMarker = null;
+            }
+            if (addSpotTempMarker) {
+                map.removeLayer(addSpotTempMarker);
+                addSpotTempMarker = null;
+            }
+            const container = document.getElementById('confirmLocationContainer');
+            if (container) {
+                container.style.display = 'none';
             }
         });
         document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
@@ -2661,7 +2685,55 @@ function initMap() {
             cameraFileInput.addEventListener('change', handleCameraFileScan);
         }
         document.getElementById('confirmPresenceBtn').addEventListener('click', confirmPresence);
-        document.getElementById('reportBtn').addEventListener('click', () => showToast('報告を受け付けました。', 'warning'));
+        document.getElementById('reportBtn').addEventListener('click', () => {
+            if (!selectedSpot) return;
+            document.getElementById('reportErrorReason').selectedIndex = 0;
+            document.getElementById('reportErrorDetails').value = '';
+            document.getElementById('reportErrorModal').style.display = 'flex';
+        });
+        document.getElementById('closeReportErrorBtn').addEventListener('click', () => {
+            document.getElementById('reportErrorModal').style.display = 'none';
+        });
+        document.getElementById('submitReportErrorBtn').addEventListener('click', async () => {
+            if (!selectedSpot) return;
+            const spotId = selectedSpot.id || selectedSpot.osmId;
+            const reason = document.getElementById('reportErrorReason').value;
+            const details = document.getElementById('reportErrorDetails').value;
+            
+            document.getElementById('reportErrorModal').style.display = 'none';
+            showToast("報告を送信中...", "info");
+            
+            try {
+                const res = await fetch(`${backendApiUrl}/api/report-error`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ spot_id: spotId, reason, details })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    if (data.action === 'deleted') {
+                        showToast("ご報告ありがとうございました。この自販機は撤去済み・または誤情報としてマップから削除されました。", "success");
+                        // Remove from active map marker layers
+                        if (markersMap[spotId]) {
+                            map.removeLayer(markersMap[spotId]);
+                            delete markersMap[spotId];
+                        }
+                        // Remove from local initialSpots cache
+                        const idx = initialSpots.findIndex(s => (s.id || s.osmId) === spotId);
+                        if (idx !== -1) initialSpots.splice(idx, 1);
+                        
+                        closeDetailPanel();
+                    } else {
+                        showToast(`ご報告ありがとうございました。運営チームにて確認いたします。(累計報告数: ${data.report_count}/3)`, "success");
+                    }
+                } else {
+                    showToast("報告の送信に失敗しました。", "error");
+                }
+            } catch (e) {
+                console.error("Report error failed:", e);
+                showToast("サーバーとの接続に失敗しました。", "error");
+            }
+        });
         document.getElementById('submitCommentBtn').addEventListener('click', addComment);
         document.getElementById('commentInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') addComment(); });
         document.getElementById('toggleCommentsBtn').addEventListener('click', toggleCommentsExpand);
@@ -3136,6 +3208,20 @@ async function showDetailPanel(spot) {
         badgeText.innerText = `要確認 (${verifiedCount}人が確認)`;
     }
 
+    // Render Vending Machine Level & XP neon bar
+    const spotLevel = spot.level || 1;
+    const spotXp = spot.xp || 0;
+    const nextLevelXp = spotLevel * 100;
+    const xpPercent = Math.min((spotXp / nextLevelXp) * 100, 100);
+    
+    const levelDisplay = document.getElementById('spotLevelDisplay');
+    const xpBar = document.getElementById('spotXpBar');
+    const xpStatusText = document.getElementById('spotXpStatusText');
+    
+    if (levelDisplay) levelDisplay.innerText = `Lv. ${spotLevel}`;
+    if (xpBar) xpBar.style.width = `${xpPercent}%`;
+    if (xpStatusText) xpStatusText.innerText = `XP: ${spotXp} / ${nextLevelXp}`;
+
     const namingRightsSection = document.getElementById('namingRightsSection');
     if (spot.owner) {
         namingRightsSection.style.display = 'none';
@@ -3353,7 +3439,7 @@ function handleFilter(e) {
 function toggleAddMode() {
     if (!addingSpotMode) {
         if (!userLocation) {
-            showToast('目の前の自販機のみ登録可能です。現在地（GPS）を取得します...', 'info');
+            showToast('自販機を登録する場所を特定するため、現在地（GPS）を取得します...', 'info');
             isAwaitingLocationForAdd = true;
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {
@@ -3364,36 +3450,74 @@ function toggleAddMode() {
                     map.setView([userLocation.lat, userLocation.lng], 16);
                     updateGPSUI(userLocation.lat, userLocation.lng, position.coords.accuracy);
                     
-                    // Proceed to add spot now that we have location
-                    addingSpotMode = true;
-                    document.getElementById('addSpotBtn').classList.add('active');
-                    showAddModal(userLocation);
+                    // Show map pin dragging instruction
+                    startMapPinDraggingMode(userLocation);
                 }, (error) => {
                     console.warn("toggleAddMode location error:", error);
-                    // Safe fallback
-                    userLocation = {
-                        lat: 35.658034,
-                        lng: 139.70163
-                    };
-                    showToast('位置情報の取得に失敗しました。デモ位置（渋谷）で自販機を登録します。', 'warning');
+                    userLocation = { lat: 35.658034, lng: 139.70163 }; // Shibuya
+                    showToast('位置取得に失敗。デモ位置（渋谷）に仮ピンを配置します。', 'warning');
                     updateGPSUI(userLocation.lat, userLocation.lng, 100);
                     map.setView([userLocation.lat, userLocation.lng], 16);
                     
-                    addingSpotMode = true;
-                    document.getElementById('addSpotBtn').classList.add('active');
-                    showAddModal(userLocation);
-                }, { enableHighAccuracy: false, maximumAge: 5000, timeout: 8000 });
+                    startMapPinDraggingMode(userLocation);
+                }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 8000 });
             } else {
                 showToast('ブラウザが位置情報に対応していません。', 'error');
             }
             return;
         }
-        addingSpotMode = true;
-        document.getElementById('addSpotBtn').classList.add('active');
-        showAddModal(userLocation);
+        startMapPinDraggingMode(userLocation);
     } else {
-        addingSpotMode = false;
-        document.getElementById('addSpotBtn').classList.remove('active');
+        cancelMapPinDraggingMode();
+    }
+}
+
+function startMapPinDraggingMode(latlng) {
+    addingSpotMode = true;
+    document.getElementById('addSpotBtn').classList.add('active');
+    closeDetailPanel();
+    
+    // Create draggable marker
+    if (addSpotTempMarker) {
+        map.removeLayer(addSpotTempMarker);
+    }
+    
+    showToast('地図上の黄色いピンをドラッグして、正しい自販機の位置へ合わせてください。', 'info');
+    
+    addSpotTempMarker = L.marker([latlng.lat, latlng.lng], {
+        draggable: true,
+        icon: L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        })
+    }).addTo(map);
+    
+    // Pan map to marker
+    map.panTo([latlng.lat, latlng.lng]);
+    
+    // Show confirmation overlay button
+    const container = document.getElementById('confirmLocationContainer');
+    if (container) {
+        container.style.display = 'block';
+    }
+}
+
+function cancelMapPinDraggingMode() {
+    addingSpotMode = false;
+    document.getElementById('addSpotBtn').classList.remove('active');
+    
+    if (addSpotTempMarker) {
+        map.removeLayer(addSpotTempMarker);
+        addSpotTempMarker = null;
+    }
+    
+    const container = document.getElementById('confirmLocationContainer');
+    if (container) {
+        container.style.display = 'none';
     }
 }
 
@@ -4629,11 +4753,12 @@ async function dispatchGlobalAddSpot(spot) {
 
 async function dispatchGlobalUpdateMetadata(spot, updates) {
     try {
+        const spotId = String(spot.id || spot.osmId);
         const res = await fetch(`${backendApiUrl}/api/update-spot-metadata`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                spot_id: String(spot.id),
+                spot_id: spotId,
                 ...updates,
                 name: spot.name,
                 lat: spot.lat,
@@ -4648,6 +4773,34 @@ async function dispatchGlobalUpdateMetadata(spot, updates) {
             })
         });
         if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        
+        const data = await res.json();
+        if (data.status === 'success' && typeof data.level === 'number') {
+            const oldLevel = spot.level || 1;
+            const newLevel = data.level;
+            
+            // Update local spot properties
+            spot.level = newLevel;
+            spot.xp = data.xp;
+            
+            // Save local cache update
+            saveSpotsToLocal();
+            
+            // If level up occurred, trigger micro-interaction effect!
+            if (newLevel > oldLevel) {
+                const flash = document.getElementById('flashOverlay');
+                if (flash) {
+                    flash.classList.add('active');
+                    setTimeout(() => flash.classList.remove('active'), 1000);
+                }
+                showToast(`🎉 レベルアップ！この自販機は Lv.${newLevel} に到達しました！ 🎉`, 'success');
+            }
+            
+            // Refresh detailed view dynamically if it is still selected
+            if (selectedSpot && (selectedSpot.id || selectedSpot.osmId) === spotId) {
+                showDetailPanel(spot);
+            }
+        }
     } catch (e) {
         console.warn("Failed to dispatch global metadata update, queueing for offline sync:", e);
         queueOfflineTask({
