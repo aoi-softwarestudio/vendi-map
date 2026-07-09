@@ -3934,7 +3934,7 @@ async function loadUserDataFromServer(syncUserId) {
 
 async function mockGoogleLogin() {
     currentUser = {
-        name: "ジハハンター・タク",
+        name: "VendiMapハンター・タク",
         email: "tophunter@example.com",
         avatar: "https://i.pravatar.cc/150?u=tophunter"
     };
