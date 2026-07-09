@@ -1,8 +1,22 @@
 services:
   - type: web
-    name: socialintent-trends
-    runtime: static
-    staticPublishPath: SocialIntent
+    name: vendimap-backend-aoi
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+    disk:
+      name: vendimap-db-disk
+      mountPath: /data
+      sizeGB: 1
 
   - type: web
     name: vendimap-app
