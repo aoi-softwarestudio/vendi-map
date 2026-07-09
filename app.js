@@ -2734,6 +2734,26 @@ function initMap() {
                 showToast("サーバーとの接続に失敗しました。", "error");
             }
         });
+        document.getElementById('shareTwitterBtn').addEventListener('click', () => {
+            if (!selectedSpot) return;
+            const spotName = selectedSpot.name || "自販機";
+            const spotId = selectedSpot.id || selectedSpot.osmId;
+            const isOwner = currentUser && selectedSpot.owner && selectedSpot.owner === currentUser.name;
+            
+            let text = "";
+            if (isOwner) {
+                text = `自販機登録＆命名ゲーム「VendiMap」で、【${spotName}】のオーナー（命名権者）になりました！👑 あなたも近くの自販機の所有者になりませんか？`;
+            } else if (selectedSpot.owner) {
+                text = `「VendiMap」でオーナー【${selectedSpot.owner}】が所有する【${spotName}】を見つけました！🥤`;
+            } else {
+                text = `「VendiMap」で面白い自販機を発見！🥤 【${spotName}】（現在オーナー募集中！）`;
+            }
+            
+            const appUrl = "https://aoi-softwarestudio.github.io/vendi-map/";
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(appUrl)}&hashtags=VendiMap,自販機`;
+            
+            window.open(twitterUrl, '_blank');
+        });
         document.getElementById('submitCommentBtn').addEventListener('click', addComment);
         document.getElementById('commentInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') addComment(); });
         document.getElementById('toggleCommentsBtn').addEventListener('click', toggleCommentsExpand);
