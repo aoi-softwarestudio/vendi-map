@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 import sqlite3
 import stripe
 
-DB_FILE = "vendimap.db"
+DB_FILE = "/data/vendimap.db" if os.path.exists("/data") else "vendimap.db"
 
 def get_db_conn():
     conn = sqlite3.connect(DB_FILE, timeout=30.0)
@@ -67,6 +67,14 @@ def init_db():
             c.execute("ALTER TABLE global_spots ADD COLUMN owner_message TEXT DEFAULT ''")
         if "status" not in columns:
             c.execute("ALTER TABLE global_spots ADD COLUMN status TEXT DEFAULT 'none'")
+        if "level" not in columns:
+            c.execute("ALTER TABLE global_spots ADD COLUMN level INTEGER DEFAULT 1")
+        if "xp" not in columns:
+            c.execute("ALTER TABLE global_spots ADD COLUMN xp INTEGER DEFAULT 0")
+        if "report_count" not in columns:
+            c.execute("ALTER TABLE global_spots ADD COLUMN report_count INTEGER DEFAULT 0")
+        if "report_details" not in columns:
+            c.execute("ALTER TABLE global_spots ADD COLUMN report_details TEXT DEFAULT '[]'")
             
         conn.commit()
         conn.close()
@@ -324,6 +332,10 @@ async def global_spots_get(min_lat: float = None, max_lat: float = None, min_lng
             spot["lineup"] = json.loads(spot["lineup"] or "[]")
             spot["comments"] = json.loads(spot["comments"] or "[]")
             spot["photos"] = json.loads(spot["photos"] or "[]")
+            spot["report_details"] = json.loads(spot.get("report_details") or "[]")
+            spot["level"] = spot.get("level") if spot.get("level") is not None else 1
+            spot["xp"] = spot.get("xp") if spot.get("xp") is not None else 0
+            spot["report_count"] = spot.get("report_count") if spot.get("report_count") is not None else 0
             spot["naming_rights_available"] = bool(spot["naming_rights_available"])
             spot["is_custom"] = bool(spot["is_custom"])
             spots.append(spot)
@@ -460,8 +472,22 @@ async def update_spot_metadata_post(payload: UpdateSpotPayload):
             comments.append(payload.comment)
         if payload.photo is not None:
             photos.append(payload.photo)
+        level = spot.get("level") if spot.get("level") is not None else 1
+        xp = spot.get("xp") if spot.get("xp") is not None else 0
+        
         if payload.verify_presence:
             verified_count += 1
+            xp += 15 # Grant 15 XP for AI scan / presence verification
+        if payload.comment is not None:
+            xp += 10 # Grant 10 XP for posting comment
+        if payload.photo is not None:
+            xp += 20 # Grant 20 XP for uploading photo
+            
+        # Level up logic: Level up threshold is level * 100 XP
+        while xp >= (level * 100):
+            xp -= (level * 100)
+            level += 1
+            
         if payload.owner_message is not None:
             owner_message = payload.owner_message
         if payload.status is not None:
@@ -481,18 +507,66 @@ async def update_spot_metadata_post(payload: UpdateSpotPayload):
                 last_updated = ?,
                 name = ?,
                 owner_message = ?,
-                status = ?
+                status = ?,
+                level = ?,
+                xp = ?
             WHERE spot_id = ?
         """, (
             owner, naming_rights_available, rating_sum, rating_count,
             rarity_votes_sum, rarity_votes_count, json.dumps(comments, ensure_ascii=False),
             json.dumps(photos, ensure_ascii=False), verified_count, last_updated,
-            name, owner_message, status_val, payload.spot_id
+            name, owner_message, status_val, level, xp, payload.spot_id
         ))
         
         conn.commit()
         conn.close()
-        return {"status": "success"}
+        return {"status": "success", "level": level, "xp": xp}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class ReportErrorPayload(BaseModel):
+    spot_id: str
+    reason: str # "location", "lineup", "removed", "spam"
+    details: str = ""
+
+@app.post("/api/report-error")
+async def report_error_post(payload: ReportErrorPayload):
+    try:
+        conn = get_db_conn()
+        c = conn.cursor()
+        
+        c.execute("SELECT report_count, report_details FROM global_spots WHERE spot_id = ?", (payload.spot_id,))
+        row = c.fetchone()
+        
+        if not row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="自販機が見つかりません。")
+            
+        report_count, report_details_str = row
+        report_count = (report_count or 0) + 1
+        report_details = json.loads(report_details_str or "[]")
+        
+        # Log this report
+        report_details.append({
+            "timestamp": time.time(),
+            "reason": payload.reason,
+            "details": payload.details
+        })
+        
+        # Automatic spam/cleanup logic: if reported 3 or more times, hide it
+        # Setting status to 'deleted' hides it from map queries, avoiding OSM sync resurrecting it
+        if report_count >= 3:
+            c.execute("UPDATE global_spots SET status = 'deleted', report_count = ?, report_details = ? WHERE spot_id = ?", 
+                      (report_count, json.dumps(report_details, ensure_ascii=False), payload.spot_id))
+            action = "deleted"
+        else:
+            c.execute("UPDATE global_spots SET report_count = ?, report_details = ? WHERE spot_id = ?", 
+                      (report_count, json.dumps(report_details, ensure_ascii=False), payload.spot_id))
+            action = "updated"
+            
+        conn.commit()
+        conn.close()
+        return {"status": "success", "action": action, "report_count": report_count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
