@@ -2795,8 +2795,57 @@ body.light-mode .mission-card.completed {
 
     /* Achievements / Mission / Territory modal content box wrapper */
     #achievementsModal > div {
-        max-width: 600px !important;
+        max-width: 440px !important;
         border-radius: 24px !important;
+        padding: 24px !important;
+    }
+    #achievementsModal .modal-inner-card {
+        padding: 12px 14px !important;
+        margin-bottom: 12px !important;
+    }
+    #achievementsModal #modalUserAvatar {
+        width: 55px !important;
+        height: 55px !important;
+    }
+    #achievementsModal #modalUserLevelBadge {
+        font-size: 0.65rem !important;
+        padding: 1px 5px !important;
+    }
+    #achievementsModal #modalUserName {
+        font-size: 0.95rem !important;
+    }
+    #achievementsModal #modalUserRank {
+        font-size: 0.7rem !important;
+        margin-bottom: 8px !important;
+    }
+    #achievementsModal #modalXPBar {
+        height: 8px !important;
+    }
+    #achievementsModal #modalXPText {
+        font-size: 0.7rem !important;
+    }
+    #achievementsModal .modal-tab-btn {
+        padding: 8px !important;
+        font-size: 0.75rem !important;
+        border-radius: 8px !important;
+    }
+    #achievementsModal .achievement-item,
+    #achievementsModal .mission-item,
+    #achievementsModal .territory-item {
+        padding: 10px 12px !important;
+        font-size: 0.78rem !important;
+        gap: 8px !important;
+    }
+    #achievementsModal .achievement-icon,
+    #achievementsModal .mission-icon {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 0.9rem !important;
+    }
+    #achievementsModal #achievementsListContent,
+    #achievementsModal #missionsListContent,
+    #achievementsModal #territoryListContent {
+        max-height: 280px !important;
     }
 
     /* 4. 検索バーを画面中央上部にコンパクトに配置 */
