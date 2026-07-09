@@ -3484,15 +3484,15 @@ function startMapPinDraggingMode(latlng) {
     
     showToast('地図上の黄色いピンをドラッグして、正しい自販機の位置へ合わせてください。', 'info');
     
+    const dragIconHtml = `<div class="custom-marker drag-adjust-marker"><div class="marker-pin" style="background: #fbbf24; border-color: #fff; box-shadow: 0 0 20px #fbbf24; transform: scale(1.25);"><i class="fas fa-hand-pointer" style="color: #fff; font-size: 0.85rem;"></i></div></div>`;
+    
     addSpotTempMarker = L.marker([latlng.lat, latlng.lng], {
         draggable: true,
-        icon: L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
+        icon: L.divIcon({
+            className: '',
+            html: dragIconHtml,
+            iconSize: [44, 44],
+            iconAnchor: [22, 44]
         })
     }).addTo(map);
     
