@@ -188,7 +188,7 @@ body {
 
 .header-center {
     position: absolute;
-    top: calc(22px + env(safe-area-inset-top, 26px));
+    top: calc(15px + env(safe-area-inset-top, 20px));
     left: 15px;
     width: calc(100% - 30px);
     z-index: 140000;
@@ -2348,7 +2348,7 @@ body.light-mode .achievement-item.locked .achievement-icon {
 
 /* 2. Position search container and filter container as a full-width block at the top */
 .header-center {
-    top: calc(22px + env(safe-area-inset-top, 26px)) !important;
+    top: calc(15px + env(safe-area-inset-top, 20px)) !important;
     width: calc(100% - 24px) !important;
     max-width: none !important;
     left: 12px !important;
